@@ -352,19 +352,38 @@ ProtoFlux ノード（ジェネリック型コンポーネント）を追加す�
 - **型指定**: C# エイリアス（`bool`, `int`, `float`）を使用する（`System.Boolean` ではない）
 - **記法**: `<>` 形式を使用する（.NET のバッククォート記法 `` `1[...] `` ではない）
 
-### 動作例
+### 動作確認済みコンポーネント
+
+| ノード | componentType |
+|--------|---------------|
+| ValueInput\<int\> | `[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueInput<int>` |
+| ValueAdd\<int\> | `[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.ValueAdd<int>` |
+| WorldTimeFloat | `[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Time.WorldTimeFloat` |
+| AxisAngle_floatQ | `[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Math.Quaternions.AxisAngle_floatQ` |
+| HSV_ToColorX | `[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Color.HSV_ToColorX` |
+| ValueFieldDrive\<floatQ\> | `[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueFieldDrive<floatQ>` |
+| ValueFieldDrive\<colorX\> | `[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueFieldDrive<colorX>` |
+| ValueFieldDrive\<bool\> | `[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueFieldDrive<bool>` |
+
+### コード例
 
 ```typescript
-// ValueFieldDrive<bool> を追加
+// ValueFieldDrive<floatQ> を追加（回転ドライブ用）
 await client.addComponent({
   containerSlotId: slotId,
-  componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueFieldDrive<bool>'
+  componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueFieldDrive<floatQ>'
 });
 
-// GlobalValue<float> を追加
+// WorldTimeFloat を追加（時間取得用）
 await client.addComponent({
   containerSlotId: slotId,
-  componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalValue<float>'
+  componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Time.WorldTimeFloat'
+});
+
+// HSV_ToColorX を追加（色変換用）
+await client.addComponent({
+  containerSlotId: slotId,
+  componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Color.HSV_ToColorX'
 });
 ```
 
@@ -376,6 +395,79 @@ await client.addComponent({
 | `ReferenceFieldDrive<T>` | 参照フィールドをドライブ |
 | `GlobalValue<T>` | グローバル値 |
 | `GlobalReference<T>` | グローバル参照 |
+
+### ProtoFlux ノードの配置
+
+ProtoFlux ノードを追加する際は、各ノードを別々のスロットに配置し、適切な位置に並べることで視認性が向上します。
+
+#### 座標系
+
+Resonite の座標系:
+- **X軸**: 左右（右が正）
+- **Y軸**: 上下（上が正）
+- **Z軸**: 前後（手前が正）
+
+ProtoFlux ノードは**左から右（X軸方向）**に配置するのが一般的です。
+
+#### 配置の基本パターン
+
+```
+左 ────────────────────────────────────────────→ 右 (X軸)
+
+[入力ノード群]  →  [処理ノード]  →  [出力ノード]  →  [ドライブノード]
+   x=-1.5            x=-1.0           x=-0.5            x=0
+```
+
+#### 複数入力がある場合
+
+Y軸で上下にずらして配置:
+
+```typescript
+// 入力1（上側）
+await client.addSlot({ name: 'Input1', position: { x: -1.5, y: 0.15, z: 0 } });
+
+// 入力2（下側）
+await client.addSlot({ name: 'Input2', position: { x: -1.5, y: -0.15, z: 0 } });
+
+// 処理ノード（中央）
+await client.addSlot({ name: 'Process', position: { x: -1.0, y: 0, z: 0 } });
+```
+
+#### 実践例: 回転するボックス
+
+```typescript
+// 親スロット
+const fluxSlot = await client.addSlot({ name: 'Flux', position: { x: 0, y: 2, z: 0 } });
+
+// 各ノードを左から右に配置
+const nodes = [
+  { name: 'AxisInput',      x: -0.6, y: 0.15 },  // 回転軸入力
+  { name: 'TimeNode',       x: -0.6, y: -0.15 }, // 時間取得
+  { name: 'AxisAngleNode',  x: -0.3, y: 0 },     // 軸角度→クォータニオン変換
+  { name: 'DriveNode',      x: 0,    y: 0 },     // 回転ドライブ
+];
+
+for (const node of nodes) {
+  await client.addSlot({
+    name: node.name,
+    parentId: fluxSlot.data.id,
+    position: { x: node.x, y: node.y, z: 0 }
+  });
+}
+```
+
+#### 配置のコツ
+
+| 項目 | 推奨値 |
+|------|--------|
+| ノード間の水平間隔 | 0.3〜0.5 |
+| 分岐時の垂直間隔 | 0.15〜0.3 |
+| 親スロットからの相対座標 | 使用する |
+
+- 親スロット（例: `Flux`）を作成し、その下に各ノードを配置
+- 位置は親スロットからの相対座標になる
+- データフローが左から右に流れるように配置
+- 分岐がある場合は Y軸で上下にずらす
 
 ### 制限事項
 
