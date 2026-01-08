@@ -95,6 +95,50 @@ await client.addComponent({
 client.disconnect();
 ```
 
+### クライアントオプション
+
+```typescript
+const client = new ResoniteLinkClient({
+  url: 'ws://localhost:29551',  // WebSocket URL（必須）
+  debug: true,                   // コンソールにログ出力
+  logFile: 'debug.log',          // ファイルにログ出力
+  requestTimeout: 30000,         // リクエストタイムアウト（ミリ秒、デフォルト: 30000）
+  autoReconnect: false,          // 自動再接続
+  reconnectInterval: 5000,       // 再接続間隔（ミリ秒）
+});
+```
+
+### デバッグログ
+
+問題が発生した場合、デバッグログを有効にすると SEND/RECV メッセージを確認できます：
+
+```typescript
+const client = new ResoniteLinkClient({
+  url: 'ws://localhost:29551',
+  debug: true,           // コンソール出力
+  logFile: 'debug.log',  // ファイル出力
+});
+```
+
+ログ例:
+```
+[2026-01-08T06:10:24.504Z] SEND: { "$type": "addSlot", "messageId": "..." }
+[2026-01-08T06:10:24.506Z] RECV: { "success": true, "messageId": "...", "error": null }
+```
+
+### リクエストタイムアウト
+
+レスポンスが返らない場合（不正な形式のデータ送信時など）、タイムアウトでエラーが発生します：
+
+```typescript
+const client = new ResoniteLinkClient({
+  url: 'ws://localhost:29551',
+  requestTimeout: 10000,  // 10秒でタイムアウト
+});
+```
+
+タイムアウト発生時は `Error: Request timeout after 10000ms: updateComponent (...)` のようなエラーがスローされます。
+
 ## 重要: ワールドシステムオブジェクト
 
 Resonite ワールドの Root 以下には、削除してはいけないシステムオブジェクトがあります。
@@ -163,6 +207,79 @@ await client.updateComponent({
   }
 });
 ```
+
+### Enum型の設定（BlendMode, LightType など）
+
+Enum 型のメンバーを更新する場合、以下の形式を使用する必要があります：
+
+```typescript
+{
+  $type: 'enum',      // 小文字の 'enum'
+  value: 'Alpha',     // 文字列で値を指定（数値ではない）
+  enumType: 'BlendMode'  // Enum の型名
+}
+```
+
+#### BlendMode の値
+
+| 値 | 説明 |
+|----|------|
+| `Opaque` | 不透明（デフォルト） |
+| `Cutout` | カットアウト（アルファテスト） |
+| `Alpha` | 半透明（アルファブレンド） |
+
+#### 半透明マテリアルの例
+
+```typescript
+await client.updateComponent({
+  id: materialId,
+  members: {
+    BlendMode: { $type: 'enum', value: 'Alpha', enumType: 'BlendMode' },
+    AlbedoColor: { $type: 'colorX', value: { r: 0.6, g: 0.75, b: 0.9, a: 0.3, profile: 'sRGB' } },
+  }
+});
+```
+
+#### LightType の値
+
+| 値 | 説明 |
+|----|------|
+| `Directional` | ディレクショナルライト |
+| `Point` | ポイントライト |
+| `Spot` | スポットライト |
+
+```typescript
+await client.updateComponent({
+  id: lightId,
+  members: {
+    LightType: { $type: 'enum', value: 'Point', enumType: 'LightType' },
+    Intensity: { $type: 'float', value: 2.0 },
+    Range: { $type: 'float', value: 10.0 },
+  }
+});
+```
+
+#### 注意事項
+
+- `$type` は必ず小文字の `'enum'`（`'Enum'` ではない）
+- `value` は数値ではなく文字列で指定
+- `enumType` を省略すると動作しない場合がある
+- 正しくない形式を送信するとレスポンスが返らずタイムアウトする
+
+### メンバーの型一覧
+
+| $type | 説明 | 例 |
+|-------|------|-----|
+| `float` | 浮動小数点 | `{ $type: 'float', value: 0.5 }` |
+| `int` | 整数 | `{ $type: 'int', value: 10 }` |
+| `bool` | 真偽値 | `{ $type: 'bool', value: true }` |
+| `float2` | 2Dベクトル | `{ $type: 'float2', value: { x: 1, y: 1 } }` |
+| `float3` | 3Dベクトル | `{ $type: 'float3', value: { x: 1, y: 2, z: 3 } }` |
+| `floatQ` | クォータニオン | `{ $type: 'floatQ', value: { x: 0, y: 0, z: 0, w: 1 } }` |
+| `colorX` | 色 | `{ $type: 'colorX', value: { r: 1, g: 0, b: 0, a: 1, profile: 'sRGB' } }` |
+| `enum` | 列挙型 | `{ $type: 'enum', value: 'Alpha', enumType: 'BlendMode' }` |
+| `reference` | 参照 | `{ $type: 'reference', targetId: 'Reso_XXXXX' }` |
+| `list` | リスト | `{ $type: 'list', elements: [...] }` |
 
 ### Materials リストの更新（2段階）
 
@@ -269,6 +386,15 @@ node dist/cli.js source --name BoxMesh
 ## サンプルスクリプト
 
 ```bash
+# 東京タワー（詳細版）を作成
+node dist/scripts/create-tokyo-tower-detailed.js ws://localhost:29551
+
+# 東京スカイツリーを作成
+node dist/scripts/create-skytree.js ws://localhost:29551
+
+# 東京タワーを削除
+node dist/scripts/delete-tokyo-tower.js ws://localhost:29551
+
 # モダンハウス（内装付き）を作成
 node dist/scripts/create-house3.js
 

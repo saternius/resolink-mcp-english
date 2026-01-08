@@ -308,7 +308,7 @@ async function createObservationDeck(
 
   // Glass material with Alpha BlendMode for transparency
   const glassMaterial = {
-    BlendMode: { $type: 'Enum', value: 2 },  // Alpha blend
+    BlendMode: { $type: 'enum', value: 'Alpha', enumType: 'BlendMode' },
     AlbedoColor: { $type: 'colorX', value: { ...GLASS_BLUE, a: 0.3, profile: 'sRGB' } },
     Metallic: { $type: 'float', value: 0.1 },
     Smoothness: { $type: 'float', value: 0.9 }
@@ -348,6 +348,7 @@ async function createUpperSection(
   const sectionHeight = (TOP_DECK_HEIGHT - MAIN_DECK_HEIGHT) / UPPER_SECTIONS;
 
   for (let i = 0; i < UPPER_SECTIONS; i++) {
+    process.stdout.write(`  Section ${i + 1}/${UPPER_SECTIONS}\r`);
     const y = MAIN_DECK_HEIGHT + i * sectionHeight;
     const width = getWidthAtHeight(y + sectionHeight / 2);
     const halfWidth = width / 2;
@@ -426,7 +427,7 @@ async function addLight(
   await client.updateComponent({
     id: light.id!,
     members: {
-      LightType: { $type: 'Enum', value: 2 },
+      LightType: { $type: 'enum', value: 'Point', enumType: 'LightType' },
       Intensity: { $type: 'float', value: intensity },
       Color: { $type: 'colorX', value: { ...color, a: 1, profile: 'sRGB' } },
       Range: { $type: 'float', value: range },
@@ -501,6 +502,7 @@ async function main() {
     // Create upper section
     console.log('Creating upper section...');
     await createUpperSection(client, towerId);
+    console.log();
 
     // Create top observation deck
     console.log('Creating top observation deck...');
