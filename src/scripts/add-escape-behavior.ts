@@ -1,8 +1,10 @@
 /**
- * 押されたらプレイヤーから逃げる機能を追加するスクリプト
+ * 押されたら原点から逃げる機能を追加するスクリプト
  *
  * RainbowBox に以下の ProtoFlux を追加:
- * ButtonEvents → 方向計算 → TweenValue で移動
+ * ボタン押下 → 方向計算(原点から離れる方向) → 位置更新
+ *
+ * ValueSource<float3> を使ってPositionを読み取り、単一出力として接続
  */
 import { ResoniteLinkClient } from '../client.js';
 
@@ -20,18 +22,23 @@ async function main() {
     if (!box?.id) throw new Error('RainbowBox not found');
     console.log(`  Found RainbowBox: ${box.id}`);
 
-    // TouchButton のIDを取得
+    // Position フィールドIDを取得
     const boxData = await client.getSlot({ slotId: box.id, depth: 0, includeComponentData: true });
+    const positionFieldId = (boxData.data as any)?.position?.id;
+    if (!positionFieldId) throw new Error('Position field not found');
+    console.log(`  Position field ID: ${positionFieldId}`);
+
+    // TouchButton のIDを取得
     const touchButton = boxData.data?.components?.find(c => c.componentType?.includes('TouchButton'));
     if (!touchButton?.id) throw new Error('TouchButton not found');
     console.log(`  Found TouchButton: ${touchButton.id}`);
 
     // 2. ProtoFlux 用スロットを作成
-    const fluxName = `EscapeFlux_${Date.now()}`;
+    const fluxName = `EscapeFlux2_${Date.now()}`;
     await client.addSlot({
       parentId: box.id,
       name: fluxName,
-      position: { x: 0, y: 0.5, z: 0 },
+      position: { x: 0, y: 0.8, z: 0 },
       isActive: true
     });
 
@@ -41,15 +48,15 @@ async function main() {
 
     // 3. 子スロットを作成（各ノード用）
     const nodeSlots = [
-      { name: 'ButtonEvents', x: -0.6, y: 0 },
-      { name: 'BoxTransform', x: -0.4, y: 0.1 },
-      { name: 'Sub', x: -0.2, y: 0 },
-      { name: 'Normalize', x: 0, y: 0 },
-      { name: 'Distance', x: 0, y: -0.15 },
-      { name: 'Mul', x: 0.2, y: 0 },
-      { name: 'Add', x: 0.4, y: 0 },
-      { name: 'SetPos', x: 0.6, y: 0 },
-      { name: 'BoxRef', x: -0.6, y: 0.15 },
+      { name: 'PosSource', x: -0.6, y: 0.1 },      // ValueSource<float3> for position
+      { name: 'Origin', x: -0.6, y: -0.1 },        // ValueInput<float3> for origin (0,0,0)
+      { name: 'Sub', x: -0.3, y: 0 },              // 箱位置 - 原点 = 方向
+      { name: 'Normalize', x: 0, y: 0 },           // 正規化
+      { name: 'Distance', x: 0, y: -0.15 },        // 逃げる距離
+      { name: 'Mul', x: 0.3, y: 0 },               // 方向 * 距離
+      { name: 'Add', x: 0.6, y: 0 },               // 現在位置 + 移動量
+      { name: 'Write', x: 0.9, y: 0 },             // Write<float3> で位置を書き込み
+      { name: 'OnButton', x: -0.9, y: 0 },         // ButtonEvents
     ];
 
     for (const node of nodeSlots) {
@@ -72,32 +79,38 @@ async function main() {
       return slot.id;
     };
 
-    const buttonEventsSlotId = getSlotId('ButtonEvents');
-    const boxTransformSlotId = getSlotId('BoxTransform');
+    const posSourceSlotId = getSlotId('PosSource');
+    const originSlotId = getSlotId('Origin');
     const subSlotId = getSlotId('Sub');
     const normalizeSlotId = getSlotId('Normalize');
     const distanceSlotId = getSlotId('Distance');
     const mulSlotId = getSlotId('Mul');
     const addSlotId = getSlotId('Add');
-    const setPosSlotId = getSlotId('SetPos');
-    const boxRefSlotId = getSlotId('BoxRef');
+    const writeSlotId = getSlotId('Write');
+    const onButtonSlotId = getSlotId('OnButton');
 
     // 4. ProtoFlux コンポーネントを追加
     console.log('  Adding ProtoFlux components...');
 
-    // ButtonEvents
+    // ValueSource<float3> - 位置を読み取る（単一float3出力）
     await client.addComponent({
-      containerSlotId: buttonEventsSlotId,
-      componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Interaction.ButtonEvents',
+      containerSlotId: posSourceSlotId,
+      componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueSource<float3>',
     });
 
-    // GlobalTransform (箱の位置取得)
+    // GlobalReference<IValue<float3>> - Positionフィールドへの参照（ValueSourceに必要）
     await client.addComponent({
-      containerSlotId: boxTransformSlotId,
-      componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Transform.GlobalTransform',
+      containerSlotId: posSourceSlotId,
+      componentType: '[FrooxEngine]FrooxEngine.GlobalReference<[FrooxEngine]FrooxEngine.IValue<float3>>',
     });
 
-    // ValueSub<float3> (方向計算: 箱位置 - クリック位置)
+    // ValueInput<float3> - 原点 (0,0,0)
+    await client.addComponent({
+      containerSlotId: originSlotId,
+      componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueInput<float3>',
+    });
+
+    // ValueSub<float3> (方向計算: 箱位置 - 原点)
     await client.addComponent({
       containerSlotId: subSlotId,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.ValueSub<float3>',
@@ -127,71 +140,98 @@ async function main() {
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.ValueAdd<float3>',
     });
 
-    // SetGlobalPosition (位置を設定)
+    // Write<float3> - 位置を書き込む
     await client.addComponent({
-      containerSlotId: setPosSlotId,
-      componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Transform.SetGlobalPosition',
+      containerSlotId: writeSlotId,
+      componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Actions.Write<float3>',
     });
 
-    // RefObjectInput<Slot> (箱への参照)
+    // ButtonEvents - ボタンイベント
     await client.addComponent({
-      containerSlotId: boxRefSlotId,
-      componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.RefObjectInput<Slot>',
+      containerSlotId: onButtonSlotId,
+      componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Interaction.ButtonEvents',
     });
 
     console.log('  Added all ProtoFlux components');
 
     // 5. コンポーネントIDを取得
     const [
-      buttonEventsData,
-      boxTransformData,
+      posSourceData,
+      originData,
       subData,
       normalizeData,
       distanceData,
       mulData,
       addData,
-      setPosData,
-      boxRefData,
+      writeData,
+      onButtonData,
     ] = await Promise.all([
-      client.getSlot({ slotId: buttonEventsSlotId, depth: 0, includeComponentData: true }),
-      client.getSlot({ slotId: boxTransformSlotId, depth: 0, includeComponentData: true }),
+      client.getSlot({ slotId: posSourceSlotId, depth: 0, includeComponentData: true }),
+      client.getSlot({ slotId: originSlotId, depth: 0, includeComponentData: true }),
       client.getSlot({ slotId: subSlotId, depth: 0, includeComponentData: true }),
       client.getSlot({ slotId: normalizeSlotId, depth: 0, includeComponentData: true }),
       client.getSlot({ slotId: distanceSlotId, depth: 0, includeComponentData: true }),
       client.getSlot({ slotId: mulSlotId, depth: 0, includeComponentData: true }),
       client.getSlot({ slotId: addSlotId, depth: 0, includeComponentData: true }),
-      client.getSlot({ slotId: setPosSlotId, depth: 0, includeComponentData: true }),
-      client.getSlot({ slotId: boxRefSlotId, depth: 0, includeComponentData: true }),
+      client.getSlot({ slotId: writeSlotId, depth: 0, includeComponentData: true }),
+      client.getSlot({ slotId: onButtonSlotId, depth: 0, includeComponentData: true }),
     ]);
 
-    const buttonEventsComp = buttonEventsData.data?.components?.find(c => c.componentType?.includes('ButtonEvents'));
-    const boxTransformComp = boxTransformData.data?.components?.find(c => c.componentType?.includes('GlobalTransform'));
+    const posSourceComp = posSourceData.data?.components?.find(c => c.componentType?.includes('ValueSource'));
+    const globalRefComp = posSourceData.data?.components?.find(c => c.componentType?.includes('GlobalReference'));
+    const originComp = originData.data?.components?.find(c => c.componentType?.includes('ValueInput'));
     const subComp = subData.data?.components?.find(c => c.componentType?.includes('ValueSub'));
     const normalizeComp = normalizeData.data?.components?.find(c => c.componentType?.includes('Normalized'));
     const distanceComp = distanceData.data?.components?.find(c => c.componentType?.includes('ValueInput'));
     const mulComp = mulData.data?.components?.find(c => c.componentType?.includes('Mul_Float3'));
     const addComp = addData.data?.components?.find(c => c.componentType?.includes('ValueAdd'));
-    const setPosComp = setPosData.data?.components?.find(c => c.componentType?.includes('SetGlobalPosition'));
-    const boxRefComp = boxRefData.data?.components?.find(c => c.componentType?.includes('RefObjectInput'));
+    const writeComp = writeData.data?.components?.find(c => c.componentType?.includes('Write'));
+    const onButtonComp = onButtonData.data?.components?.find(c => c.componentType?.includes('ButtonEvents'));
 
-    if (!buttonEventsComp?.id || !boxTransformComp?.id || !subComp?.id || !normalizeComp?.id ||
-        !distanceComp?.id || !mulComp?.id || !addComp?.id || !setPosComp?.id || !boxRefComp?.id) {
-      console.log('Component IDs:', {
-        buttonEventsComp: buttonEventsComp?.id,
-        boxTransformComp: boxTransformComp?.id,
-        subComp: subComp?.id,
-        normalizeComp: normalizeComp?.id,
-        distanceComp: distanceComp?.id,
-        mulComp: mulComp?.id,
-        addComp: addComp?.id,
-        setPosComp: setPosComp?.id,
-        boxRefComp: boxRefComp?.id,
-      });
+    console.log('  Component IDs:', {
+      posSourceComp: posSourceComp?.id,
+      globalRefComp: globalRefComp?.id,
+      originComp: originComp?.id,
+      subComp: subComp?.id,
+      normalizeComp: normalizeComp?.id,
+      distanceComp: distanceComp?.id,
+      mulComp: mulComp?.id,
+      addComp: addComp?.id,
+      writeComp: writeComp?.id,
+      onButtonComp: onButtonComp?.id,
+    });
+
+    if (!posSourceComp?.id || !globalRefComp?.id || !originComp?.id || !subComp?.id ||
+        !normalizeComp?.id || !distanceComp?.id || !mulComp?.id || !addComp?.id ||
+        !writeComp?.id || !onButtonComp?.id) {
       throw new Error('Failed to find all components');
     }
     console.log('  Got all component IDs');
 
     // 6. 値を設定
+    console.log('  Setting values...');
+
+    // GlobalReference.Reference を Position フィールドに設定
+    await client.updateComponent({
+      id: globalRefComp.id,
+      members: { Reference: { $type: 'reference', targetId: positionFieldId } } as any,
+    });
+    console.log('  Set GlobalReference to Position field');
+
+    // ValueSource.Source を GlobalReference に設定
+    await client.updateComponent({
+      id: posSourceComp.id,
+      members: { Source: { $type: 'reference', targetId: globalRefComp.id } } as any,
+    });
+    console.log('  Set ValueSource.Source to GlobalReference');
+
+    // Origin = (0, 0, 0)
+    await client.updateComponent({
+      id: originComp.id,
+      members: { Value: { $type: 'float3', value: { x: 0, y: 0, z: 0 } } } as any,
+    });
+    console.log('  Set origin: (0, 0, 0)');
+
     // 逃げる距離 = 0.5m
     await client.updateComponent({
       id: distanceComp.id,
@@ -199,39 +239,28 @@ async function main() {
     });
     console.log('  Set escape distance: 0.5m');
 
-    // BoxRef に RainbowBox を設定
-    await client.updateComponent({
-      id: boxRefComp.id,
-      members: { Target: { $type: 'reference', targetId: box.id } } as any,
-    });
-    console.log('  Set box reference');
-
     // 7. 接続を設定
     console.log('  Connecting nodes...');
 
-    // GlobalTransform.Instance ← BoxRef
-    await client.updateComponent({
-      id: boxTransformComp.id,
-      members: { Instance: { $type: 'reference', targetId: boxRefComp.id } } as any,
-    });
-
-    // ValueSub.A ← GlobalTransform.GlobalPosition (箱の位置)
-    // ValueSub.B ← ButtonEvents.GlobalPoint (クリック位置)
+    // Sub.A ← PosSource (箱の位置)
+    // Sub.B ← Origin (原点)
     await client.updateComponent({
       id: subComp.id,
       members: {
-        A: { $type: 'reference', targetId: boxTransformComp.id },
-        B: { $type: 'reference', targetId: buttonEventsComp.id },
+        A: { $type: 'reference', targetId: posSourceComp.id },
+        B: { $type: 'reference', targetId: originComp.id },
       } as any,
     });
+    console.log('  Connected Sub: PosSource - Origin');
 
-    // Normalized.A ← ValueSub (方向ベクトル)
+    // Normalize.A ← Sub (方向ベクトル)
     await client.updateComponent({
       id: normalizeComp.id,
       members: { A: { $type: 'reference', targetId: subComp.id } } as any,
     });
+    console.log('  Connected Normalize <- Sub');
 
-    // Mul.A ← Normalized (正規化された方向)
+    // Mul.A ← Normalize (正規化された方向)
     // Mul.B ← Distance (逃げる距離)
     await client.updateComponent({
       id: mulComp.id,
@@ -240,41 +269,41 @@ async function main() {
         B: { $type: 'reference', targetId: distanceComp.id },
       } as any,
     });
+    console.log('  Connected Mul: Normalize * Distance');
 
-    // Add.A ← GlobalTransform.GlobalPosition (現在位置)
+    // Add.A ← PosSource (現在位置)
     // Add.B ← Mul (移動ベクトル)
     await client.updateComponent({
       id: addComp.id,
       members: {
-        A: { $type: 'reference', targetId: boxTransformComp.id },
+        A: { $type: 'reference', targetId: posSourceComp.id },
         B: { $type: 'reference', targetId: mulComp.id },
       } as any,
     });
+    console.log('  Connected Add: PosSource + Mul');
 
-    // SetGlobalPosition.Instance ← BoxRef
-    // SetGlobalPosition.Position ← Add (新しい位置)
+    // Write.Target ← Position フィールド (直接参照)
+    // Write.Value ← Add (新しい位置)
     await client.updateComponent({
-      id: setPosComp.id,
+      id: writeComp.id,
       members: {
-        Instance: { $type: 'reference', targetId: boxRefComp.id },
-        Position: { $type: 'reference', targetId: addComp.id },
+        Target: { $type: 'reference', targetId: globalRefComp.id },
+        Value: { $type: 'reference', targetId: addComp.id },
       } as any,
     });
+    console.log('  Connected Write: Target=Position, Value=Add');
 
-    // ButtonEvents.Pressed ← SetGlobalPosition (トリガー接続)
+    // ButtonEvents.Pressed ← Write (トリガー接続)
     await client.updateComponent({
-      id: buttonEventsComp.id,
+      id: onButtonComp.id,
       members: {
-        Pressed: { $type: 'reference', targetId: setPosComp.id },
+        Pressed: { $type: 'reference', targetId: writeComp.id },
       } as any,
     });
-
-    console.log('  Connected all nodes');
-
-    // ButtonEvents に TouchButton を接続するには GlobalValue<IButton> が必要
-    // これは複雑なので、別途対応が必要
+    console.log('  Connected ButtonEvents.Pressed -> Write');
 
     console.log('\n✨ Escape behavior added!');
+    console.log('  Flow: Button -> Write -> (PosSource + Normalize(PosSource - Origin) * Distance)');
     console.log('  Note: You need to manually connect ButtonEvents.Button to TouchButton in Resonite');
     console.log('  - Open the ProtoFlux');
     console.log('  - Drag TouchButton component to ButtonEvents.Button input');
