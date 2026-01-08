@@ -21,7 +21,7 @@ import {
   AddComponentOptions,
   UpdateComponentOptions,
   ROOT_SLOT_ID,
-} from './types';
+} from './types.js';
 
 export interface ResoniteLinkClientOptions {
   url: string;

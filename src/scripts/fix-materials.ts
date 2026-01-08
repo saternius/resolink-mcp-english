@@ -1,4 +1,4 @@
-import { ResoniteLinkClient } from '../index';
+import { ResoniteLinkClient } from '../index.js';
 
 interface PartFix {
   name: string;

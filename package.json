@@ -1,21 +1,25 @@
 {
-  "name": "resonitelink-client",
+  "name": "resonitelink-mcp",
   "version": "1.0.0",
-  "description": "Node.js client for ResoniteLink WebSocket protocol",
+  "description": "MCP Server and CLI client for ResoniteLink WebSocket protocol",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "resonitelink": "./dist/cli.js"
+    "resonitelink": "./dist/cli.js",
+    "resonitelink-mcp": "./dist/mcp-server.js"
   },
   "scripts": {
     "build": "tsc",
     "example": "tsc && node dist/example.js",
     "cli": "tsc && node dist/cli.js",
+    "mcp": "tsc && node dist/mcp-server.js",
     "clean": "rimraf dist"
   },
   "keywords": [
     "resonite",
     "resonitelink",
+    "mcp",
     "vr",
     "websocket",
     "client"
@@ -23,8 +27,10 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.2",
     "uuid": "^13.0.0",
-    "ws": "^8.19.0"
+    "ws": "^8.19.0",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",

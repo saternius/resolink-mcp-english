@@ -1,2 +1,2 @@
-export { ResoniteLinkClient, ResoniteLinkClientOptions } from './client';
-export * from './types';
+export { ResoniteLinkClient, ResoniteLinkClientOptions } from './client.js';
+export * from './types.js';

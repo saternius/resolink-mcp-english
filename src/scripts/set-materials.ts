@@ -1,4 +1,4 @@
-import { ResoniteLinkClient } from '../index';
+import { ResoniteLinkClient } from '../index.js';
 
 async function main() {
   const args = process.argv.slice(2);

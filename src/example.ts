@@ -1,4 +1,4 @@
-import { ResoniteLinkClient, ROOT_SLOT_ID } from './index';
+import { ResoniteLinkClient, ROOT_SLOT_ID } from './index.js';
 
 async function main() {
   // Create client instance

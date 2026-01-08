@@ -1,4 +1,4 @@
-import { ResoniteLinkClient } from '../index';
+import { ResoniteLinkClient } from '../index.js';
 
 async function fixPart(client: ResoniteLinkClient, slotId: string, name: string) {
   // Get slot components
