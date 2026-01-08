@@ -352,6 +352,22 @@ ProtoFlux ノード（ジェネリック型コンポーネント）を追加す�
 - **型指定**: C# エイリアス（`bool`, `int`, `float`）を使用する（`System.Boolean` ではない）
 - **記法**: `<>` 形式を使用する（.NET のバッククォート記法 `` `1[...] `` ではない）
 
+#### 複合型パラメータ（Slot, User など）
+
+スロットやユーザーなどの複合型を型パラメータに使う場合は、**アセンブリ名付きの完全修飾名**を使用する：
+
+```
+[ProtoFluxBindings]...RefObjectInput<[FrooxEngine]FrooxEngine.Slot>
+```
+
+| 型 | 正しい形式 | 間違った形式 |
+|----|-----------|-------------|
+| Slot | `<[FrooxEngine]FrooxEngine.Slot>` | `<Slot>`, `<FrooxEngine.Slot>` |
+| User | `<[FrooxEngine]FrooxEngine.User>` | `<User>` |
+| IButton | `<[FrooxEngine]FrooxEngine.IButton>` | `<IButton>` |
+
+**重要**: プリミティブ型（`int`, `float`, `bool` など）はエイリアスをそのまま使い、複合型（`Slot`, `User` など）は `[FrooxEngine]FrooxEngine.TypeName` 形式を使う。
+
 ### 動作確認済みコンポーネント
 
 | ノード | componentType |
