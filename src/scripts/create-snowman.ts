@@ -81,7 +81,19 @@ async function createPart(
     } as any,
   });
 
-  // 9. Get Materials element ID and set
+  // 9. Set Materials (2-step update required)
+  // Step 1: Add element to list (targetId will be null)
+  await client.updateComponent({
+    id: renderer.id!,
+    members: {
+      Materials: {
+        $type: 'list',
+        elements: [{ $type: 'reference', targetId: material.id }],
+      },
+    } as any,
+  });
+
+  // Step 2: Get element ID and set targetId
   const rendererData = await client.getComponent(renderer.id!);
   if (rendererData.success) {
     const materials = (rendererData.data.members as any)?.Materials;
