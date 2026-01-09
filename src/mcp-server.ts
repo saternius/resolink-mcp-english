@@ -234,6 +234,23 @@ server.registerTool(
   }
 );
 
+// === Asset Import Tools ===
+server.registerTool(
+  'import_texture_file',
+  {
+    title: 'Import Texture from File',
+    description: 'Import a texture from a file on the local file system (Resonite host). Returns assetURL that can be assigned to static asset providers.',
+    inputSchema: {
+      filePath: z.string().describe('Path of the texture file to import (local file system path on Resonite host)'),
+    },
+  },
+  async ({ filePath }) => {
+    const c = await getClient();
+    const result = await c.importTexture2DFile({ filePath });
+    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+  }
+);
+
 // === Decompile Search Tools ===
 
 server.registerTool(

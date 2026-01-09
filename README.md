@@ -48,6 +48,7 @@ npm run build
 | `get_component` | コンポーネント情報を取得 |
 | `update_component` | コンポーネントを更新 |
 | `remove_component` | コンポーネントを削除 |
+| `import_texture_file` | テクスチャをファイルからインポート |
 | `search_components` | コンポーネントを検索 |
 | `get_component_info` | コンポーネント詳細を取得 |
 | `list_categories` | カテゴリ一覧 |
@@ -187,6 +188,62 @@ const client = new ResoniteLinkClient({
 ```
 
 タイムアウト発生時は `Error: Request timeout after 10000ms: updateComponent (...)` のようなエラーがスローされます。
+
+### テクスチャインポート
+
+ResoniteLink のアセットインポートAPIを使用して、テクスチャをインポートできます。
+
+#### ファイルからインポート
+
+```typescript
+// Resoniteホストのローカルファイルからテクスチャをインポート
+const result = await client.importTexture2DFile({
+  filePath: 'C:/path/to/texture.png'
+});
+
+if (result.success) {
+  console.log('Asset URL:', result.assetURL);
+  // assetURL を StaticTexture2D などに設定可能
+}
+```
+
+#### 生データからインポート
+
+```typescript
+// RGBAピクセルデータからテクスチャをインポート
+const width = 256;
+const height = 256;
+const rawData = Buffer.alloc(width * height * 4); // RGBA, 4 bytes per pixel
+
+// ピクセルデータを生成（例: グラデーション）
+for (let y = 0; y < height; y++) {
+  for (let x = 0; x < width; x++) {
+    const offset = (y * width + x) * 4;
+    rawData[offset] = x;         // R
+    rawData[offset + 1] = y;     // G
+    rawData[offset + 2] = 128;   // B
+    rawData[offset + 3] = 255;   // A
+  }
+}
+
+const result = await client.importTexture2DRawData({
+  width,
+  height,
+  colorProfile: 'sRGB',  // 'sRGB' または 'Linear'
+  rawData
+});
+
+if (result.success) {
+  console.log('Asset URL:', result.assetURL);
+}
+```
+
+#### 注意事項
+
+- `filePath` は Resonite が動作しているホストのローカルパス
+- `assetURL` はセッション内でのみ有効（一時的なURL）
+- サポートされる形式: PNG, JPG など一般的な画像形式
+- 生データは RGBA フォーマット（1ピクセル4バイト）
 
 ## 重要: ワールドシステムオブジェクト
 
