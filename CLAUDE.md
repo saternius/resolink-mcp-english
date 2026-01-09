@@ -597,9 +597,100 @@ await client.addSlot({ name: 'Process', position: { x: -1.0, y: 0, z: 0 } });
 
 ---
 
+## ProtoFlux 変数ストレージの選択
+
+### StoredObject vs DataModelObjectFieldStore
+
+| 項目 | StoredObject\<T\> | DataModelObjectFieldStore\<T\> |
+|------|-------------------|-------------------------------|
+| 永続化 | ❌ セッション内のみ | ✅ ワールド保存時に永続化 |
+| 用途 | 一時的な計算結果 | 保存が必要なデータ |
+| コンテキスト | ExecutionContext | FrooxEngineContext |
+| 型指定 | `StoredObject<string>` | `DataModelObjectFieldStore<string>` |
+
+### DataModelObjectFieldStore を使う場合
+
+`ObjectWrite` も FrooxEngineContext 版を使う必要がある:
+
+```typescript
+// ❌ 間違い - ExecutionContext 版
+'[ProtoFluxBindings]...ObjectWrite<string>'
+
+// ✅ 正解 - FrooxEngineContext 版
+'[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectWrite<[FrooxEngine]FrooxEngine.ProtoFlux.FrooxEngineContext,string>'
+```
+
+**ポイント**: 型パラメータに `[FrooxEngine]FrooxEngine.ProtoFlux.FrooxEngineContext` を指定
+
+---
+
+## 非同期HTTPリクエスト (GET_String)
+
+### 必要なノード構成
+
+```
+ButtonEvents.Pressed → StartAsyncTask → GET_String → ObjectWrite → DataModelObjectFieldStore
+                                             ↓
+                                        OnResponse → ObjectWrite実行
+```
+
+### コンポーネント型
+
+| ノード | 型 |
+|--------|-----|
+| ButtonEvents | `[ProtoFluxBindings]...FrooxEngine.Interaction.ButtonEvents` |
+| StartAsyncTask | `[ProtoFluxBindings]...FrooxEngine.Async.StartAsyncTask` |
+| GET_String | `[ProtoFluxBindings]...FrooxEngine.Network.GET_String` |
+| DataModelObjectFieldStore\<string\> | `[ProtoFluxBindings]...FrooxEngine.Variables.DataModelObjectFieldStore<string>` |
+| ObjectWrite (FrooxEngineContext) | `[ProtoFluxBindings]...ObjectWrite<[FrooxEngine]FrooxEngine.ProtoFlux.FrooxEngineContext,string>` |
+
+### 接続パターン
+
+```typescript
+// 1. ButtonEvents.Pressed → StartAsyncTask
+await client.updateComponent({
+  id: buttonEventsComp.id,
+  members: { Pressed: { $type: 'reference', targetId: startAsyncComp.id } } as any,
+});
+
+// 2. StartAsyncTask.TaskStart → GET_String
+await client.updateComponent({
+  id: startAsyncComp.id,
+  members: { TaskStart: { $type: 'reference', targetId: webRequestComp.id } } as any,
+});
+
+// 3. GET_String.OnResponse → ObjectWrite
+const webRequestDetails = await client.getComponent(webRequestComp.id);
+const onResponseId = webRequestDetails.data.members.OnResponse.id;
+await client.updateComponent({
+  id: webRequestComp.id,
+  members: { OnResponse: { $type: 'reference', id: onResponseId, targetId: writeComp.id } } as any,
+});
+
+// 4. ObjectWrite.Value ← GET_String.Content
+const contentId = webRequestDetails.data.members.Content.id;
+await client.updateComponent({
+  id: writeComp.id,
+  members: { Value: { $type: 'reference', targetId: contentId } } as any,
+});
+
+// 5. ObjectWrite.Variable ← DataModelObjectFieldStore
+await client.updateComponent({
+  id: writeComp.id,
+  members: { Variable: { $type: 'reference', targetId: storeComp.id } } as any,
+});
+```
+
+### 手動設定が必要な項目
+
+- **ButtonEvents.Button**: PhysicalButtonをドラッグして接続
+
+---
+
 ## 注意事項
 
 - システムスロット（Controllers, Roles, SpawnArea, Light, Skybox, Assets等）は削除しない
 - Materials リストは2段階で更新（要素追加 → targetId設定）
 - HSV_ToColorX は S, V 入力が null だと色が出ない（要 ValueInput 接続）
 - Wiggler は floatQ（回転）のみ対応、float3（位置）は不可
+- DataModelObjectFieldStoreを使う場合はFrooxEngineContext版のObjectWriteが必要
