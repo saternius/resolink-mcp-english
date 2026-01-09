@@ -230,6 +230,40 @@ await client.updateComponent({
 });
 ```
 
+### 出力メンバー（empty型）の参照
+
+ResoniteLinkの更新により、ProtoFluxノードの**出力メンバー**が `$type: "empty"` として返されるようになった。
+
+#### 複数出力ノード（GlobalTransform等）の接続
+
+```typescript
+// 1. コンポーネント情報を取得
+const slotData = await client.getSlot({ slotId, includeComponentData: true });
+const globalTransform = slotData.data?.components?.find(c =>
+  c.componentType?.includes('GlobalTransform')
+);
+
+// 2. 出力メンバーのIDを取得（empty型）
+const globalPositionId = globalTransform.members.GlobalPosition.id;  // "Reso_XXX"
+const globalRotationId = globalTransform.members.GlobalRotation.id;
+const globalScaleId = globalTransform.members.GlobalScale.id;
+
+// 3. 出力IDを直接参照して接続
+await client.updateComponent({
+  id: subComp.id,
+  members: {
+    A: { $type: 'reference', targetId: globalPositionId },  // 出力IDを参照
+  } as any,
+});
+```
+
+#### 単一出力ノード vs 複数出力ノード
+
+| ノードタイプ | 接続方法 |
+|------------|---------|
+| 単一出力（ValueInput, ValueAdd等） | コンポーネントIDを直接参照 |
+| 複数出力（GlobalTransform等） | 出力メンバーのIDを個別に参照 |
+
 ---
 
 ## 注意事項

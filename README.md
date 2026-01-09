@@ -329,6 +329,61 @@ await client.updateComponent({
 | `enum` | 列挙型 | `{ $type: 'enum', value: 'Alpha', enumType: 'BlendMode' }` |
 | `reference` | 参照 | `{ $type: 'reference', targetId: 'Reso_XXXXX' }` |
 | `list` | リスト | `{ $type: 'list', elements: [...] }` |
+| `empty` | 出力メンバー | `{ $type: 'empty', id: 'Reso_XXXXX' }` |
+
+### empty 型（ProtoFlux 出力メンバー）
+
+ResoniteLink の更新により、ProtoFlux ノードの**出力メンバー**が `$type: "empty"` として返されるようになりました。
+
+#### 背景
+
+ProtoFlux ノードには入力（SyncRef）と出力（NodeValueOutput）があります：
+
+- **入力**: 値を受け取る（reference型で返される）
+- **出力**: 値を出力する（以前は返されなかった → **今は empty 型で返される**）
+
+#### 例: GlobalTransform ノード
+
+```json
+{
+  "componentType": "...GlobalTransform",
+  "members": {
+    "Instance": { "$type": "reference", "targetId": null, ... },
+    "GlobalPosition": { "$type": "empty", "id": "Reso_82E" },
+    "GlobalRotation": { "$type": "empty", "id": "Reso_82F" },
+    "GlobalScale": { "$type": "empty", "id": "Reso_830" }
+  }
+}
+```
+
+#### 出力メンバーの参照方法
+
+出力メンバーの `id` を使って、他のノードの入力に接続できます：
+
+```typescript
+// GlobalTransform の GlobalPosition 出力を取得
+const globalTransformComp = slotData.data?.components?.find(c =>
+  c.componentType?.includes('GlobalTransform')
+);
+const globalPositionId = globalTransformComp.members.GlobalPosition.id; // "Reso_82E"
+
+// ValueSub の A 入力に GlobalPosition を接続
+await client.updateComponent({
+  id: subComp.id,
+  members: {
+    A: { $type: 'reference', targetId: globalPositionId },  // 出力IDを直接参照！
+  }
+});
+```
+
+#### 以前との違い
+
+| 項目 | 以前 | 現在 |
+|------|------|------|
+| 出力メンバー | JSONに含まれない | `$type: "empty"` で返される |
+| 複数出力ノードの参照 | コンポーネントID全体を参照 → エラー | 出力IDを個別に参照 → 成功 |
+
+これにより、GlobalTransform のような複数出力を持つノードも正しく接続できるようになりました。
 
 ### Materials リストの更新（2段階）
 

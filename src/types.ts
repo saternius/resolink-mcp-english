@@ -65,7 +65,17 @@ export interface Reference {
   targetType?: string;
 }
 
-export type Member = Field<unknown> | Reference;
+/**
+ * Empty type - ProtoFlux出力メンバーを表す
+ * ResoniteLinkの更新により、ノードの出力が $type: "empty" として返されるようになった
+ * この id を使って他のノードの入力に接続できる
+ */
+export interface EmptyMember {
+  $type: 'empty';
+  id: string;
+}
+
+export type Member = Field<unknown> | Reference | EmptyMember;
 
 // ============================================
 // Data Model
@@ -107,7 +117,9 @@ export type MessageType =
   | 'getComponent'
   | 'addComponent'
   | 'updateComponent'
-  | 'removeComponent';
+  | 'removeComponent'
+  | 'importTexture2DFile'
+  | 'importTexture2DRawData';
 
 export interface Message {
   $type: MessageType;
@@ -158,10 +170,38 @@ export interface RemoveComponentMessage extends Message {
 }
 
 // ============================================
+// Asset Import Messages
+// ============================================
+
+export interface ImportTexture2DFileMessage extends Message {
+  $type: 'importTexture2DFile';
+  /**
+   * Path of the texture file to import (local file system path)
+   */
+  filePath: string;
+}
+
+export interface ImportTexture2DRawDataMessage extends Message {
+  $type: 'importTexture2DRawData';
+  /**
+   * Width of the texture
+   */
+  width: number;
+  /**
+   * Height of the texture
+   */
+  height: number;
+  /**
+   * Color profile (e.g., 'sRGB', 'Linear')
+   */
+  colorProfile: string;
+}
+
+// ============================================
 // Response Types
 // ============================================
 
-export type ResponseType = 'response' | 'slotData' | 'componentData';
+export type ResponseType = 'response' | 'slotData' | 'componentData' | 'assetData';
 
 export interface Response {
   $type: ResponseType;
@@ -179,6 +219,15 @@ export interface SlotDataResponse extends Response {
 export interface ComponentDataResponse extends Response {
   $type: 'componentData';
   data: Component;
+}
+
+export interface AssetDataResponse extends Response {
+  $type: 'assetData';
+  /**
+   * URL of the imported asset. This can be assigned to static asset providers.
+   * Note: Usually this URL is valid only within the session.
+   */
+  assetURL: string;
 }
 
 // ============================================
