@@ -58,21 +58,70 @@ npm run build
 
 ## CLI として使用
 
+### WebSocket URL の指定方法
+
+CLI は WebSocket URL を以下の優先順位で決定します:
+
+1. コマンドライン引数 `--url` (最優先)
+2. 環境変数 `RESONITELINK_URL`
+3. デフォルト値: `ws://localhost:29551`
+
+**環境変数で設定する例:**
+
 ```bash
-# スロット情報を取得
-node dist/cli.js get-slot --slot-id Root --depth 1
+# Windows (PowerShell)
+$env:RESONITELINK_URL = "ws://localhost:29469"
+
+# Windows (コマンドプロンプト)
+set RESONITELINK_URL=ws://localhost:29469
+
+# Linux/Mac
+export RESONITELINK_URL=ws://localhost:29469
+```
+
+環境変数を設定すれば、毎回 `--url` オプションを指定する必要がなくなります。
+
+### 基本的なコマンド
+
+```bash
+# Rootスロット情報を取得
+node dist/cli.js root --depth 1
+
+# 特定のスロット情報を取得
+node dist/cli.js get-slot --id <slotId> --depth 1
+
+# コンポーネント情報も含めて取得
+node dist/cli.js get-slot --id <slotId> --components
 
 # 名前でスロットを検索
 node dist/cli.js find --name MyObject
 
 # スロットを追加
-node dist/cli.js add-slot --name NewSlot --x 0 --y 1 --z 0
+node dist/cli.js add-slot --name NewSlot --position 0,1,0
+
+# 親スロットを指定してスロットを追加
+node dist/cli.js add-slot --parent <parentId> --name MySlot --position 0,1,0 --scale 1,1,1
 
 # コンポーネントを追加
-node dist/cli.js add-component --slot-id <id> --type "[FrooxEngine]FrooxEngine.BoxMesh"
+node dist/cli.js add-component --slot <slotId> --type "[FrooxEngine]FrooxEngine.BoxMesh"
+
+# スロットを更新
+node dist/cli.js update-slot --id <slotId> --name NewName --position 0,2,0
 
 # スロットを削除
-node dist/cli.js remove --slot-id <id>
+node dist/cli.js remove-slot --id <slotId>
+
+# コンポーネントを取得
+node dist/cli.js get-component --id <componentId>
+
+# コンポーネントを削除
+node dist/cli.js remove-component --id <componentId>
+
+# スロット階層をツリー表示
+node dist/cli.js tree --depth 3
+
+# WebSocket URLを指定（異なるポートの場合）
+node dist/cli.js root --url ws://localhost:9422 --depth 2
 ```
 
 ## ライブラリとして使用
