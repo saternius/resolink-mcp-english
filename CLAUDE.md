@@ -81,6 +81,148 @@
 | ProtoFlux | ValueFieldDrive\<colorX\> | `[ProtoFluxBindings]...ValueFieldDrive<colorX>` |
 | ProtoFlux | FieldDriveBase+Proxy | `FrooxEngine.ProtoFlux.CoreNodes.FieldDriveBase<colorX>+Proxy` |
 | ProtoFlux | RefObjectInput\<Slot\> | `[ProtoFluxBindings]...RefObjectInput<[FrooxEngine]FrooxEngine.Slot>` |
+| ProtoFlux | DynamicImpulseReceiver | `[ProtoFluxBindings]...Actions.DynamicImpulseReceiver` |
+| ProtoFlux | DuplicateSlot | `[ProtoFluxBindings]...FrooxEngine.Slots.DuplicateSlot` |
+| UIX | Canvas | `[FrooxEngine]FrooxEngine.UIX.Canvas` |
+| UIX | RectTransform | `[FrooxEngine]FrooxEngine.UIX.RectTransform` |
+| UIX | Text | `[FrooxEngine]FrooxEngine.UIX.Text` |
+| UIX | Image | `[FrooxEngine]FrooxEngine.UIX.Image` |
+| UIX | Button | `[FrooxEngine]FrooxEngine.UIX.Button` |
+| UIX | TextField | `[FrooxEngine]FrooxEngine.UIX.TextField` |
+| UIX | VerticalLayout | `[FrooxEngine]FrooxEngine.UIX.VerticalLayout` |
+| UIX | HorizontalLayout | `[FrooxEngine]FrooxEngine.UIX.HorizontalLayout` |
+| UIX | LayoutElement | `[FrooxEngine]FrooxEngine.UIX.LayoutElement` |
+| Interaction | Grabbable | `[FrooxEngine]FrooxEngine.Grabbable` |
+| Interaction | ButtonDynamicImpulseTrigger | `[FrooxEngine]FrooxEngine.ButtonDynamicImpulseTrigger` |
+
+---
+
+## UIX の構築
+
+### 重要: スケール設定
+
+UIXはピクセル単位で動作するため、**ルートスロットのスケールを0.001に設定する必要がある**:
+
+```typescript
+await client.updateSlot({
+  id: mainId,
+  scale: { x: 0.001, y: 0.001, z: 0.001 },
+});
+```
+
+### UIXコンポーネントの名前空間
+
+UIXコンポーネントは `FrooxEngine.UIX` 名前空間にある（`FrooxEngine` ではない）:
+
+```
+[FrooxEngine]FrooxEngine.UIX.<ComponentName>
+```
+
+### 基本的なUIX構造
+
+```
+Root (scale: 0.001)
+├── Canvas
+├── Grabbable (掴んで移動可能にする場合)
+└── Background
+    ├── RectTransform (AnchorMin/Max: 0,0 ~ 1,1)
+    └── Image (背景色)
+└── Content
+    ├── RectTransform
+    ├── VerticalLayout / HorizontalLayout
+    └── 子要素...
+```
+
+### UIXコンポーネントの設定例
+
+```typescript
+// Canvas
+await client.updateComponent({
+  id: canvasId,
+  members: {
+    Size: { $type: 'float2', value: { x: 400, y: 500 } },
+  } as any,
+});
+
+// RectTransform（全画面）
+await client.updateComponent({
+  id: rectId,
+  members: {
+    AnchorMin: { $type: 'float2', value: { x: 0, y: 0 } },
+    AnchorMax: { $type: 'float2', value: { x: 1, y: 1 } },
+    OffsetMin: { $type: 'float2', value: { x: 0, y: 0 } },
+    OffsetMax: { $type: 'float2', value: { x: 0, y: 0 } },
+  } as any,
+});
+
+// Image（色設定）
+await client.updateComponent({
+  id: imageId,
+  members: {
+    Tint: { $type: 'colorX', value: { r: 0.2, g: 0.2, b: 0.25, a: 1 } },
+  } as any,
+});
+
+// Text
+await client.updateComponent({
+  id: textId,
+  members: {
+    Content: { $type: 'string', value: 'Hello' },
+    Size: { $type: 'float', value: 24 },
+    Color: { $type: 'colorX', value: { r: 1, g: 1, b: 1, a: 1 } },
+  } as any,
+});
+
+// LayoutElement
+await client.updateComponent({
+  id: layoutId,
+  members: {
+    PreferredHeight: { $type: 'float', value: 50 },
+    FlexibleWidth: { $type: 'float', value: 1 },
+  } as any,
+});
+
+// VerticalLayout / HorizontalLayout
+await client.updateComponent({
+  id: layoutId,
+  members: {
+    Spacing: { $type: 'float', value: 10 },
+    PaddingTop: { $type: 'float', value: 10 },
+    PaddingBottom: { $type: 'float', value: 10 },
+    PaddingLeft: { $type: 'float', value: 10 },
+    PaddingRight: { $type: 'float', value: 10 },
+    ForceExpandWidth: { $type: 'bool', value: true },
+    ForceExpandHeight: { $type: 'bool', value: false },
+  } as any,
+});
+```
+
+### UIX Enumフィールドの設定
+
+`HorizontalAlign`, `VerticalAlign` などのEnum型フィールドは `$type: 'enum'` で設定可能：
+
+```typescript
+await client.updateComponent({
+  id: textId,
+  members: {
+    HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
+    VerticalAlign: { $type: 'enum', value: 'Middle', enumType: 'TextVerticalAlignment' },
+  } as any,
+});
+```
+
+**形式**:
+```typescript
+{ $type: 'enum', value: '値の名前', enumType: 'Enum型名' }
+```
+
+### UIXの注意事項
+
+- TextFieldをアタッチすると自動的にTextEditorもアタッチされる
+
+### 参考スクリプト
+
+- `create-todo-list.ts` - UIX TODOリストの完全な実装例
 
 ---
 
@@ -274,6 +416,184 @@ await client.updateComponent({
 |------------|---------|
 | 単一出力（ValueInput, ValueAdd等） | コンポーネントIDを直接参照 |
 | 複数出力（GlobalTransform等） | 出力メンバーのIDを個別に参照 |
+
+---
+
+## メンバーの型一覧
+
+| $type | 説明 | 例 |
+|-------|------|-----|
+| `float` | 浮動小数点 | `{ $type: 'float', value: 0.5 }` |
+| `int` | 整数 | `{ $type: 'int', value: 10 }` |
+| `bool` | 真偽値 | `{ $type: 'bool', value: true }` |
+| `string` | 文字列 | `{ $type: 'string', value: 'text' }` |
+| `float2` | 2Dベクトル | `{ $type: 'float2', value: { x: 1, y: 1 } }` |
+| `float3` | 3Dベクトル | `{ $type: 'float3', value: { x: 1, y: 2, z: 3 } }` |
+| `floatQ` | クォータニオン | `{ $type: 'floatQ', value: { x: 0, y: 0, z: 0, w: 1 } }` |
+| `colorX` | 色 | `{ $type: 'colorX', value: { r: 1, g: 0, b: 0, a: 1, profile: 'sRGB' } }` |
+| `enum` | 列挙型 | `{ $type: 'enum', value: 'Alpha', enumType: 'BlendMode' }` |
+| `reference` | 参照 | `{ $type: 'reference', targetId: 'Reso_XXXXX' }` |
+| `list` | リスト | `{ $type: 'list', elements: [...] }` |
+| `empty` | 出力メンバー（読み取り専用） | `{ $type: 'empty', id: 'Reso_XXXXX' }` |
+
+---
+
+## Enum型の設定
+
+### 基本形式
+
+```typescript
+{ $type: 'enum', value: '値の名前', enumType: 'Enum型名' }
+```
+
+**注意**:
+- `$type` は必ず小文字の `'enum'`
+- `value` は数値ではなく文字列で指定
+- `enumType` を省略すると動作しない場合がある
+
+### よく使うEnum
+
+#### BlendMode
+| 値 | 説明 |
+|----|------|
+| `Opaque` | 不透明（デフォルト） |
+| `Cutout` | カットアウト（アルファテスト） |
+| `Alpha` | 半透明（アルファブレンド） |
+
+```typescript
+BlendMode: { $type: 'enum', value: 'Alpha', enumType: 'BlendMode' }
+```
+
+#### LightType
+| 値 | 説明 |
+|----|------|
+| `Directional` | ディレクショナルライト |
+| `Point` | ポイントライト |
+| `Spot` | スポットライト |
+
+```typescript
+LightType: { $type: 'enum', value: 'Point', enumType: 'LightType' }
+```
+
+#### UIX TextAlignment
+| Enum型名 | 値 |
+|----------|-----|
+| `TextHorizontalAlignment` | `Left`, `Center`, `Right` |
+| `TextVerticalAlignment` | `Top`, `Middle`, `Bottom` |
+
+---
+
+## マテリアル設定
+
+### PBS_Metallic の例
+
+```typescript
+await client.updateComponent({
+  id: materialId,
+  members: {
+    AlbedoColor: { $type: 'colorX', value: { r: 1, g: 0, b: 0, a: 1, profile: 'sRGB' } },
+    Smoothness: { $type: 'float', value: 0.5 },
+    Metallic: { $type: 'float', value: 0.2 },
+  } as any,
+});
+```
+
+### 半透明マテリアル
+
+```typescript
+await client.updateComponent({
+  id: materialId,
+  members: {
+    BlendMode: { $type: 'enum', value: 'Alpha', enumType: 'BlendMode' },
+    AlbedoColor: { $type: 'colorX', value: { r: 0.6, g: 0.75, b: 0.9, a: 0.3, profile: 'sRGB' } },
+  } as any,
+});
+```
+
+---
+
+## Materials リストの更新（2段階必要）
+
+MeshRenderer の Materials リストは2段階で更新する必要がある:
+
+1. **リストに要素追加**（この時点では targetId は null になる）
+2. **要素IDを取得して参照を設定**
+
+```typescript
+// 1. まずリストに要素を追加
+await client.updateComponent({
+  id: rendererId,
+  members: {
+    Materials: {
+      $type: 'list',
+      elements: [{ $type: 'reference', targetId: materialId }]
+    }
+  } as any,
+});
+
+// 2. 追加された要素のIDを取得
+const rendererData = await client.getComponent(rendererId);
+const elementId = rendererData.data.members.Materials.elements[0].id;
+
+// 3. 要素のIDを指定して、参照を設定
+await client.updateComponent({
+  id: rendererId,
+  members: {
+    Materials: {
+      $type: 'list',
+      elements: [{ $type: 'reference', id: elementId, targetId: materialId }]
+    }
+  } as any,
+});
+```
+
+**ポイント**:
+- `id` フィールドを省略 → 新しい要素が追加される
+- `id` フィールドを指定 → 既存要素が更新される
+- 1回目で `targetId` を指定しても無視されて null になる
+
+---
+
+## ProtoFlux ノードの配置
+
+### Resonite 座標系
+- **X軸**: 左右（右が正）
+- **Y軸**: 上下（上が正）
+- **Z軸**: 前後（手前が正）
+
+### 推奨配置
+
+データフローは左→右（X軸方向）に配置:
+
+```
+左 ────────────────────────────────────────────→ 右 (X軸)
+
+[入力ノード群]  →  [処理ノード]  →  [出力ノード]  →  [ドライブノード]
+   x=-1.5            x=-1.0           x=-0.5            x=0
+```
+
+### 配置の推奨値
+
+| 項目 | 推奨値 |
+|------|--------|
+| ノード間の水平間隔 | 0.3〜0.5 |
+| 分岐時の垂直間隔 | 0.15〜0.3 |
+| 座標系 | 親スロットからの相対座標 |
+
+### 複数入力がある場合
+
+Y軸で上下にずらして配置:
+
+```typescript
+// 入力1（上側）
+await client.addSlot({ name: 'Input1', position: { x: -1.5, y: 0.15, z: 0 } });
+
+// 入力2（下側）
+await client.addSlot({ name: 'Input2', position: { x: -1.5, y: -0.15, z: 0 } });
+
+// 処理ノード（中央）
+await client.addSlot({ name: 'Process', position: { x: -1.0, y: 0, z: 0 } });
+```
 
 ---
 
