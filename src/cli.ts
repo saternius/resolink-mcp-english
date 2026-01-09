@@ -2,8 +2,7 @@
 
 import { ResoniteLinkClient, ROOT_SLOT_ID, Slot, Component, Member } from './index.js';
 
-
-const DEFAULT_URL = 'ws://localhost:9080';
+const DEFAULT_URL = "ws://localhost:29551";
 
 interface CliOptions {
   url: string;
