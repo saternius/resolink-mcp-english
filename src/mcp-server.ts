@@ -3,6 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import * as z from 'zod';
 import { ResoniteLinkClient } from './client.js';
 import { DecompileSearch } from './decompile-search.js';
+import type { Slot, Component } from './types.js';
 
 
 const DEFAULT_WS_URL = process.env.RESONITE_WS_URL || 'ws://localhost:29551';
@@ -19,6 +20,55 @@ async function getClient(): Promise<ResoniteLinkClient> {
     isConnected = true;
   }
   return client;
+}
+
+// ============================================
+// Response Summarization Helpers
+// ============================================
+
+function summarizeSlot(slot: Slot, includeComponents = false): any {
+  const summary: any = {
+    id: slot.id,
+    name: slot.name?.value,
+  };
+
+  if (slot.position?.value) {
+    const p = slot.position.value;
+    summary.pos = [p.x, p.y, p.z];
+  }
+
+  if (slot.children?.length) {
+    summary.children = slot.children.map(c => summarizeSlot(c, includeComponents));
+  }
+
+  if (includeComponents && slot.components?.length) {
+    summary.components = slot.components.map(c => summarizeComponent(c));
+  }
+
+  return summary;
+}
+
+function summarizeComponent(comp: Component): any {
+  const summary: any = {
+    id: comp.id,
+    type: comp.componentType?.split('.').pop(), // 短い型名
+  };
+
+  if (comp.members) {
+    // メンバーのキーとIDだけ（値は省略）
+    summary.members = Object.fromEntries(
+      Object.entries(comp.members).map(([key, val]: [string, any]) => [
+        key,
+        (val?.id || val?.targetId || val?.value) ?? null
+      ])
+    );
+  }
+
+  return summary;
+}
+
+function toJson(data: any, compact = true): string {
+  return compact ? JSON.stringify(data) : JSON.stringify(data, null, 2);
 }
 
 const server = new McpServer({
@@ -71,16 +121,23 @@ server.registerTool(
       slotId: z.string().describe('Slot ID (e.g., "Root" or specific ID)'),
       depth: z.number().optional().describe('Depth of children to retrieve (default: 0)'),
       includeComponentData: z.boolean().optional().describe('Include component data (default: false)'),
+      summary: z.boolean().optional().describe('Return compact summary (default: true for token savings)'),
     },
   },
-  async ({ slotId, depth, includeComponentData }) => {
+  async ({ slotId, depth, includeComponentData, summary }) => {
     const c = await getClient();
     const result = await c.getSlot({
       slotId,
       depth: depth ?? 0,
       includeComponentData: includeComponentData ?? false,
     });
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+
+    const useSummary = summary ?? true;
+    if (useSummary && result.success) {
+      const data = summarizeSlot(result.data, includeComponentData ?? false);
+      return { content: [{ type: 'text', text: toJson({ success: true, data }) }] };
+    }
+    return { content: [{ type: 'text', text: toJson(result) }] };
   }
 );
 
@@ -93,12 +150,18 @@ server.registerTool(
       name: z.string().describe('Name of the slot to find'),
       parentId: z.string().optional().describe('Parent slot ID to search in (default: "Root")'),
       maxDepth: z.number().optional().describe('Maximum depth to search (default: 10)'),
+      summary: z.boolean().optional().describe('Return compact summary (default: true)'),
     },
   },
-  async ({ name, parentId, maxDepth }) => {
+  async ({ name, parentId, maxDepth, summary }) => {
     const c = await getClient();
     const result = await c.findSlotByName(name, parentId || 'Root', maxDepth || 10);
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+
+    const useSummary = summary ?? true;
+    if (useSummary && result) {
+      return { content: [{ type: 'text', text: toJson(summarizeSlot(result)) }] };
+    }
+    return { content: [{ type: 'text', text: toJson(result) }] };
   }
 );
 
@@ -126,7 +189,7 @@ server.registerTool(
       position,
       isActive: isActive ?? true,
     });
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    return { content: [{ type: 'text', text: toJson(result) }] };
   }
 );
 
@@ -142,7 +205,7 @@ server.registerTool(
   async ({ slotId }) => {
     const c = await getClient();
     const result = await c.removeSlot(slotId);
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    return { content: [{ type: 'text', text: toJson(result) }] };
   }
 );
 
@@ -163,7 +226,70 @@ server.registerTool(
   async ({ slotId, name, position, rotation, scale, isActive }) => {
     const c = await getClient();
     const result = await c.updateSlot({ id: slotId, name, position, rotation, scale, isActive });
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    return { content: [{ type: 'text', text: toJson(result) }] };
+  }
+);
+
+// === Lightweight Slot Tools ===
+server.registerTool(
+  'list_children',
+  {
+    title: 'List Children',
+    description: 'List child slots (id and name only) - lightweight alternative to get_slot',
+    inputSchema: {
+      slotId: z.string().describe('Parent slot ID'),
+      depth: z.number().optional().describe('Depth (default: 1)'),
+    },
+  },
+  async ({ slotId, depth }) => {
+    const c = await getClient();
+    const result = await c.getSlot({
+      slotId,
+      depth: depth ?? 1,
+      includeComponentData: false,
+    });
+
+    if (!result.success) {
+      return { content: [{ type: 'text', text: toJson({ success: false, error: result.errorInfo }) }] };
+    }
+
+    const children = result.data.children?.map(c => ({
+      id: c.id,
+      name: c.name?.value,
+    })) ?? [];
+
+    return { content: [{ type: 'text', text: toJson({ success: true, children }) }] };
+  }
+);
+
+server.registerTool(
+  'list_components',
+  {
+    title: 'List Components',
+    description: 'List components on a slot (id and type only) - lightweight',
+    inputSchema: {
+      slotId: z.string().describe('Slot ID'),
+    },
+  },
+  async ({ slotId }) => {
+    const c = await getClient();
+    const result = await c.getSlot({
+      slotId,
+      depth: 0,
+      includeComponentData: true,
+    });
+
+    if (!result.success) {
+      return { content: [{ type: 'text', text: toJson({ success: false, error: result.errorInfo }) }] };
+    }
+
+    const components = result.data.components?.map(comp => ({
+      id: comp.id,
+      type: comp.componentType?.split('.').pop(),
+      fullType: comp.componentType,
+    })) ?? [];
+
+    return { content: [{ type: 'text', text: toJson({ success: true, components }) }] };
   }
 );
 
@@ -181,7 +307,7 @@ server.registerTool(
   async ({ slotId, componentType }) => {
     const c = await getClient();
     const result = await c.addComponent({ containerSlotId: slotId, componentType });
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    return { content: [{ type: 'text', text: toJson(result) }] };
   }
 );
 
@@ -192,12 +318,18 @@ server.registerTool(
     description: 'Get component details by ID',
     inputSchema: {
       componentId: z.string().describe('Component ID'),
+      summary: z.boolean().optional().describe('Return compact summary (default: true)'),
     },
   },
-  async ({ componentId }) => {
+  async ({ componentId, summary }) => {
     const c = await getClient();
     const result = await c.getComponent(componentId);
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+
+    const useSummary = summary ?? true;
+    if (useSummary && result.success) {
+      return { content: [{ type: 'text', text: toJson({ success: true, data: summarizeComponent(result.data) }) }] };
+    }
+    return { content: [{ type: 'text', text: toJson(result) }] };
   }
 );
 
@@ -214,7 +346,7 @@ server.registerTool(
   async ({ componentId, members }) => {
     const c = await getClient();
     const result = await c.updateComponent({ id: componentId, members: members as any });
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    return { content: [{ type: 'text', text: toJson(result) }] };
   }
 );
 
@@ -230,7 +362,7 @@ server.registerTool(
   async ({ componentId }) => {
     const c = await getClient();
     const result = await c.removeComponent(componentId);
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    return { content: [{ type: 'text', text: toJson(result) }] };
   }
 );
 
@@ -247,7 +379,7 @@ server.registerTool(
   async ({ filePath }) => {
     const c = await getClient();
     const result = await c.importTexture2DFile({ filePath });
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    return { content: [{ type: 'text', text: toJson(result) }] };
   }
 );
 
