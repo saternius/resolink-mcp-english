@@ -1170,3 +1170,104 @@ DynamicImpulseReceiver (Tag="Cell_0")
 | 比較演算 | ObjectEquals, ObjectNotEquals, AND_Bool, OR_Bool, NOT_Bool |
 | 値書き込み | ObjectWrite / ValueWrite (FrooxEngineContext版) |
 | 後続処理呼び出し | DynamicImpulseTrigger
+
+---
+
+## ランダム値の保存パターン（じゃんけんゲーム参照）
+
+### 重要: RandomInt は参照ごとに新しい値を生成する
+
+`RandomInt` ノードは **参照されるたびに新しい乱数を生成する**。
+
+複数の分岐（例: CPUの手選択と結果判定）で同じランダム値を使いたい場合、**一度ValueFieldに保存してから参照する必要がある**。
+
+```
+❌ 間違い - RandomInt を直接参照
+RandomInt → Equals0 → Cond0 (CPUの手)
+    ↓
+   Equals1 → CondResult0 (結果)
+   ※ Equals0 と Equals1 で異なるランダム値が使われる！
+
+✅ 正解 - ValueFieldに保存してから参照
+RandomInt → ValueWrite → ValueField<int>
+                              ↓
+                    ValueSource → Equals0, Equals1
+                    ※ 同じ値が使われる
+```
+
+### コンポーネント構成
+
+```typescript
+// 1. ValueField<int> をGameStateに追加（乱数保存用）
+await client.addComponent({
+  containerSlotId: gameStateId,
+  componentType: '[FrooxEngine]FrooxEngine.ValueField<int>',
+});
+
+// 2. RandomWrite スロット: ValueSource + GlobalReference + ValueWrite
+await client.addComponent({ containerSlotId: randomWriteSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueSource<int>' });
+await client.addComponent({ containerSlotId: randomWriteSlotId, componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalReference<[FrooxEngine]FrooxEngine.IValue<int>>' });
+await client.addComponent({ containerSlotId: randomWriteSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueWrite<[FrooxEngine]FrooxEngine.ProtoFlux.FrooxEngineContext,int>' });
+
+// 3. RandomSource スロット: ValueSource + GlobalReference（読み取り用）
+await client.addComponent({ containerSlotId: randomSourceSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueSource<int>' });
+await client.addComponent({ containerSlotId: randomSourceSlotId, componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalReference<[FrooxEngine]FrooxEngine.IValue<int>>' });
+```
+
+### フロー接続
+
+```
+ボタン押下
+    ↓
+PlayerWrite (プレイヤーの手を保存)
+    ↓
+RandomWrite (乱数をValueFieldに保存) ← RandomInt
+    ↓
+CpuWrite (CPUの手を保存) ← RandomSource経由で比較
+    ↓
+ResultWrite (結果を保存) ← RandomSource経由で比較
+```
+
+### ネストされた条件分岐パターン（3択選択）
+
+3つの選択肢から1つを選ぶ場合、ネストされた `ObjectConditional` を使用:
+
+```typescript
+// 勝敗テーブル: resultTable[playerIdx][cpuIdx]
+// グー(0)がチョキ(1)に勝ち、チョキ(1)がパー(2)に勝ち、パー(2)がグー(0)に勝ち
+const resultTable = [
+  ['あいこ！', '勝ち！🎉', '負け...'],   // プレイヤーがグー
+  ['負け...', 'あいこ！', '勝ち！🎉'],   // プレイヤーがチョキ
+  ['勝ち！🎉', '負け...', 'あいこ！'],   // プレイヤーがパー
+];
+
+// 条件分岐: cond1 = (rand==1) ? value1 : value2, cond0 = (rand==0) ? value0 : cond1
+// → rand=0 → value0, rand=1 → value1, rand=2 → value2
+```
+
+### 動作確認済みコンポーネント（じゃんけん追加分）
+
+| カテゴリ | コンポーネント | 型フォーマット |
+|---------|--------------|---------------|
+| ProtoFlux | RandomInt | `[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Math.Random.RandomInt` |
+| ProtoFlux | ValueEquals\<int\> | `[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueEquals<int>` |
+| ProtoFlux | ObjectConditional\<string\> | `[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectConditional<string>` |
+| ProtoFlux | ValueSource\<int\> | `[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueSource<int>` |
+| ProtoFlux | GlobalReference\<IValue\<int\>\> | `[FrooxEngine]FrooxEngine.ProtoFlux.GlobalReference<[FrooxEngine]FrooxEngine.IValue<int>>` |
+| ProtoFlux | ValueWrite (int, FrooxEngineContext) | `[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueWrite<[FrooxEngine]FrooxEngine.ProtoFlux.FrooxEngineContext,int>` |
+
+**注意**: `Random_Int`（アンダースコアあり）ではなく `RandomInt`（アンダースコアなし）が正しい型名。
+
+### 参考スクリプト
+
+`src/scripts/create-janken.ts` を参照。
+
+| 機能 | 使用コンポーネント/ノード |
+|------|------------------------|
+| 乱数生成 | RandomInt |
+| 乱数保存 | ValueField\<int\> + ValueWrite + ValueSource + GlobalReference |
+| 3択選択 | ネストされた ObjectConditional\<string\> |
+| 比較演算 | ValueEquals\<int\> |
+| ボタン入力 | Button + ButtonDynamicImpulseTrigger |
+| イベント受信 | DynamicImpulseReceiver + GlobalValue\<string\> |
+| 状態表示 | ValueDriver\<string\> |
