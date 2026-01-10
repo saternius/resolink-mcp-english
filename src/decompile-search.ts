@@ -25,7 +25,7 @@ export class DecompileSearch {
   private sourcePath: string;
 
   constructor(sourcePath?: string) {
-    this.sourcePath = sourcePath || 'C:\\Users\\neo\\GitHub\\reso-decompile\\sources';
+    this.sourcePath = sourcePath || 'D:\\Resonite\\Project\\ResoniteLink\\reso-decompile\\sources';
   }
 
   async searchComponents(query: string, options: { maxResults?: number } = {}): Promise<ComponentInfo[]> {
