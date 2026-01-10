@@ -1026,3 +1026,146 @@ await client.updateComponent({
 - `ValueField<string>` 初期値 = null（空文字ではない）
 - `ObjectEquals.B` を未接続 → A と null を比較
 - `ObjectWrite.Value` を未接続 → null を書き込む
+
+---
+
+## ゲームロジック実装パターン（マルバツゲーム参照）
+
+### ゲーム状態管理（ValueField使用）
+
+ゲーム状態は `ValueField<T>` コンポーネントで管理する:
+
+```typescript
+// GameStateスロットにValueFieldを追加
+await client.addComponent({ containerSlotId: gameStateId, componentType: '[FrooxEngine]FrooxEngine.ValueField<bool>' });   // isOTurn
+await client.addComponent({ containerSlotId: gameStateId, componentType: '[FrooxEngine]FrooxEngine.ValueField<bool>' });   // isGameOver
+await client.addComponent({ containerSlotId: gameStateId, componentType: '[FrooxEngine]FrooxEngine.ValueField<string>' }); // セル状態 x 9
+await client.addComponent({ containerSlotId: gameStateId, componentType: '[FrooxEngine]FrooxEngine.ValueField<string>' }); // resultText
+```
+
+### UIドライブ（ValueDriver / BooleanValueDriver）
+
+ValueFieldの値をUIX Textに反映するには `ValueDriver<T>` を使用:
+
+```typescript
+// ValueDriver<string>でセルテキストをドライブ
+await client.addComponent({
+  containerSlotId: gameStateId,
+  componentType: '[FrooxEngine]FrooxEngine.ValueDriver<string>',
+});
+
+// 設定
+await client.updateComponent({
+  id: driveId,
+  members: {
+    ValueSource: { $type: 'reference', targetId: cellValueId },    // ValueField.Value
+    DriveTarget: { $type: 'reference', id: driveTargetId, targetId: textContentId }, // Text.Content
+  } as any,
+});
+```
+
+bool値に基づいて異なる文字列を表示するには `BooleanValueDriver<string>`:
+
+```typescript
+await client.addComponent({
+  containerSlotId: gameStateId,
+  componentType: '[FrooxEngine]FrooxEngine.BooleanValueDriver<string>',
+});
+
+await client.updateComponent({
+  id: turnDriverId,
+  members: {
+    TrueValue: { $type: 'string', value: '○ の番' },
+    FalseValue: { $type: 'string', value: '× の番' },
+    TargetField: { $type: 'reference', id: targetFieldId, targetId: turnContentId },
+  } as any,
+});
+```
+
+### ProtoFluxからValueFieldを読み書き（ObjectValueSource/ValueSource + GlobalReference）
+
+ProtoFlux内でValueFieldを読み書きするパターン:
+
+```typescript
+// 1. ObjectValueSource<string> または ValueSource<bool> を追加
+await client.addComponent({
+  containerSlotId: slotId,
+  componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ObjectValueSource<string>',
+});
+
+// 2. GlobalReference<IValue<T>> を同じスロットに追加
+await client.addComponent({
+  containerSlotId: slotId,
+  componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalReference<[FrooxEngine]FrooxEngine.IValue<string>>',
+});
+
+// 3. GlobalReference.Reference → ValueField.Value を設定
+await client.updateComponent({
+  id: globalRefComp.id,
+  members: { Reference: { $type: 'reference', targetId: valueFieldValueId } } as any,
+});
+
+// 4. Source.Source → GlobalReference を設定
+await client.updateComponent({
+  id: sourceComp.id,
+  members: { Source: { $type: 'reference', targetId: globalRefComp.id } } as any,
+});
+```
+
+**ポイント**:
+- `ObjectValueSource<T>` / `ValueSource<T>` は `IVariable` を実装
+- `GlobalReference<IValue<T>>` が ValueField.Value（`IValue<T>`を実装）への橋渡し
+- ObjectWrite/ValueWrite の Variable に Source を接続して書き込み可能
+
+### 勝敗判定ロジック（マルバツゲーム）
+
+8ライン（横3、縦3、斜め2）をチェックして勝者を判定:
+
+```typescript
+const lines = [
+  [0, 1, 2], [3, 4, 5], [6, 7, 8],  // 横
+  [0, 3, 6], [1, 4, 7], [2, 5, 8],  // 縦
+  [0, 4, 8], [2, 4, 6],             // 斜め
+];
+```
+
+各ラインで:
+1. **3セル同一チェック**: `ObjectEquals<string>` で A==B, B==C をチェック
+2. **null除外**: `ObjectNotEquals<string>` で A != null をチェック
+3. **AND合成**: `AND_Bool` で (A==B) AND (B==C) AND (A!=null)
+4. **8ライン OR**: `OR_Bool` のチェーン構造で全ライン判定
+
+引き分け判定:
+1. 9セル全て `ObjectNotEquals<string>` で != null をチェック
+2. `AND_Bool` のチェーンで全セル埋まりを判定
+3. **勝者なし AND 全セル埋まり** = 引き分け
+
+### イベント駆動（DynamicImpulse）
+
+ボタンクリック → ロジック実行のパターン:
+
+```
+Button + ButtonDynamicImpulseTrigger
+    ↓ PressedTag="Cell_0"
+DynamicImpulseReceiver (Tag="Cell_0")
+    ↓ OnTriggered
+ロジック処理
+```
+
+**重要**: `ButtonDynamicImpulseTrigger.Target` にルートスロットを設定すると、そのスロット階層内のReceiverのみが反応。複数インスタンスを独立動作させるには必須。
+
+### 完全な実装例
+
+`src/scripts/create-tictactoe-complete.ts` を参照。
+
+| 機能 | 使用コンポーネント/ノード |
+|------|------------------------|
+| ゲーム状態 | ValueField<bool/string> |
+| UIドライブ | ValueDriver<T>, BooleanValueDriver<T> |
+| 状態読み書き | ObjectValueSource + GlobalReference<IValue<T>> |
+| ボタン入力 | Button + ButtonDynamicImpulseTrigger |
+| イベント受信 | DynamicImpulseReceiver + GlobalValue<string> |
+| 条件分岐 | If, ObjectConditional<T> |
+| 比較演算 | ObjectEquals, ObjectNotEquals, AND_Bool, OR_Bool, NOT_Bool |
+| 値書き込み | ObjectWrite / ValueWrite (FrooxEngineContext版) |
+| 後続処理呼び出し | DynamicImpulseTrigger
