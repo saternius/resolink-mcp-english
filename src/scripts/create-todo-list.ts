@@ -1,7 +1,7 @@
 /**
- * UIX TODOリスト作成スクリプト
+ * UIX TODO List Creation Script
  *
- * 使い方: npx tsx src/scripts/create-todo-list.ts [ws://localhost:3343]
+ * Usage: npx tsx src/scripts/create-todo-list.ts [ws://localhost:3343]
  */
 import { ResoniteLinkClient } from '../client.js';
 
@@ -14,7 +14,7 @@ async function main() {
   try {
     console.log('Creating UIX TODO List...\n');
 
-    // 1. メインスロット作成
+    // 1. Create main slot
     const slotName = `TodoList_${Date.now()}`;
     await client.addSlot({
       name: slotName,
@@ -27,14 +27,14 @@ async function main() {
     const mainId = mainSlot.id;
     console.log(`  Main slot: ${mainId}`);
 
-    // スケールを0.001に設定（UIXはピクセル単位なので）
+    // Set scale to 0.001 (UIX uses pixel units)
     await client.updateSlot({
       id: mainId,
       scale: { x: 0.001, y: 0.001, z: 0.001 },
     });
     console.log('  Scale set to 0.001');
 
-    // 2. Canvas + Grabbable追加
+    // 2. Add Canvas + Grabbable
     await client.addComponent({
       containerSlotId: mainId,
       componentType: '[FrooxEngine]FrooxEngine.UIX.Canvas',
@@ -56,7 +56,7 @@ async function main() {
       console.log('  Canvas configured');
     }
 
-    // 3. 背景スロット作成
+    // 3. Create background slot
     await client.addSlot({ parentId: mainId, name: 'Background' });
     slotData = await client.getSlot({ slotId: mainId, depth: 1 });
     const bgSlot = slotData.data?.children?.find((c: any) => c.name?.value === 'Background');
@@ -91,7 +91,7 @@ async function main() {
     }
     console.log('  Background created');
 
-    // 4. コンテンツスロット（VerticalLayout）
+    // 4. Content slot (VerticalLayout)
     await client.addSlot({ parentId: mainId, name: 'Content' });
     slotData = await client.getSlot({ slotId: mainId, depth: 1 });
     const contentSlot = slotData.data?.children?.find((c: any) => c.name?.value === 'Content');
@@ -132,7 +132,7 @@ async function main() {
     }
     console.log('  VerticalLayout created');
 
-    // 5. ヘッダー
+    // 5. Header
     await client.addSlot({ parentId: contentId, name: 'Header' });
     contentData = await client.getSlot({ slotId: contentId, depth: 1 });
     const headerSlot = contentData.data?.children?.find((c: any) => c.name?.value === 'Header');
@@ -165,7 +165,7 @@ async function main() {
     }
     console.log('  Header created');
 
-    // 6. 入力エリア（TextField + AddButton）
+    // 6. Input area (TextField + AddButton)
     await client.addSlot({ parentId: contentId, name: 'InputArea' });
     contentData = await client.getSlot({ slotId: contentId, depth: 1 });
     const inputAreaSlot = contentData.data?.children?.find((c: any) => c.name?.value === 'InputArea');
@@ -197,7 +197,7 @@ async function main() {
       });
     }
 
-    // 入力フィールド
+    // Input field
     await client.addSlot({ parentId: inputAreaId, name: 'InputField' });
     inputAreaData = await client.getSlot({ slotId: inputAreaId, depth: 1 });
     const inputFieldSlot = inputAreaData.data?.children?.find((c: any) => c.name?.value === 'InputField');
@@ -233,14 +233,14 @@ async function main() {
       await client.updateComponent({
         id: inputFieldText.id,
         members: {
-          Content: { $type: 'string', value: 'タスクを入力...' },
+          Content: { $type: 'string', value: 'Enter task...' },
           Size: { $type: 'float', value: 18 },
           Color: { $type: 'colorX', value: { r: 0.7, g: 0.7, b: 0.7, a: 1 } },
         } as any,
       });
     }
 
-    // 追加ボタン
+    // Add button
     await client.addSlot({ parentId: inputAreaId, name: 'AddButton' });
     inputAreaData = await client.getSlot({ slotId: inputAreaId, depth: 1 });
     const addButtonSlot = inputAreaData.data?.children?.find((c: any) => c.name?.value === 'AddButton');
@@ -294,13 +294,13 @@ async function main() {
     }
     console.log('  Input area created');
 
-    // 7. TODOアイテム
+    // 7. TODO items
     const todoItems = [
-      { text: 'ResoniteLinkをテストする', done: true },
-      { text: 'UIXの構造を理解する', done: true },
-      { text: 'TODOリストを作る', done: false },
-      { text: 'ProtoFluxで機能追加', done: false },
-      { text: '友達に見せる', done: false },
+      { text: 'Test ResoniteLink', done: true },
+      { text: 'Understand UIX structure', done: true },
+      { text: 'Create TODO list', done: false },
+      { text: 'Add features with ProtoFlux', done: false },
+      { text: 'Show to friends', done: false },
     ];
 
     for (let i = 0; i < todoItems.length; i++) {
@@ -350,7 +350,7 @@ async function main() {
         });
       }
 
-      // チェックボックス
+      // Checkbox
       await client.addSlot({ parentId: itemId, name: 'Check' });
       itemData = await client.getSlot({ slotId: itemId, depth: 1 });
       const checkSlot = itemData.data?.children?.find((c: any) => c.name?.value === 'Check');
@@ -382,7 +382,7 @@ async function main() {
         });
       }
 
-      // テキスト
+      // Text
       await client.addSlot({ parentId: itemId, name: 'Label' });
       itemData = await client.getSlot({ slotId: itemId, depth: 1 });
       const labelSlot = itemData.data?.children?.find((c: any) => c.name?.value === 'Label');
@@ -420,7 +420,7 @@ async function main() {
       console.log(`  Item ${i + 1}: ${item.text}`);
     }
 
-    // 8. テンプレートアイテム（非アクティブ、複製用）
+    // 8. Template item (inactive, for duplication)
     await client.addSlot({ parentId: contentId, name: 'Template', isActive: false });
     contentData = await client.getSlot({ slotId: contentId, depth: 1 });
     const templateSlot = contentData.data?.children?.find((c: any) => c.name?.value === 'Template');
@@ -464,7 +464,7 @@ async function main() {
       });
     }
 
-    // テンプレートのチェックボックス
+    // Template checkbox
     await client.addSlot({ parentId: templateId, name: 'Check' });
     templateData = await client.getSlot({ slotId: templateId, depth: 1 });
     const tplCheckSlot = templateData.data?.children?.find((c: any) => c.name?.value === 'Check');
@@ -495,7 +495,7 @@ async function main() {
       }
     }
 
-    // テンプレートのラベル
+    // Template label
     await client.addSlot({ parentId: templateId, name: 'Label' });
     templateData = await client.getSlot({ slotId: templateId, depth: 1 });
     const tplLabelSlot = templateData.data?.children?.find((c: any) => c.name?.value === 'Label');
@@ -518,7 +518,7 @@ async function main() {
         await client.updateComponent({
           id: tplLabelText.id,
           members: {
-            Content: { $type: 'string', value: '新しいタスク' },
+            Content: { $type: 'string', value: 'New Task' },
             Size: { $type: 'float', value: 18 },
             Color: { $type: 'colorX', value: { r: 1, g: 1, b: 1, a: 1 } },
           } as any,
@@ -527,20 +527,20 @@ async function main() {
     }
     console.log('  Template created');
 
-    // 9. ProtoFlux（タスク追加ロジック）
+    // 9. ProtoFlux (task addition logic)
     await client.addSlot({ parentId: mainId, name: 'ProtoFlux' });
     slotData = await client.getSlot({ slotId: mainId, depth: 1 });
     const fluxSlot = slotData.data?.children?.find((c: any) => c.name?.value === 'ProtoFlux');
     if (!fluxSlot?.id) throw new Error('ProtoFlux slot not found');
     const fluxId = fluxSlot.id;
 
-    // DynamicImpulseReceiverスロット
+    // DynamicImpulseReceiver slot
     await client.addSlot({ parentId: fluxId, name: 'Receiver', position: { x: 0, y: 0, z: 0 } });
-    // TemplateRefスロット
+    // TemplateRef slot
     await client.addSlot({ parentId: fluxId, name: 'TemplateRef', position: { x: 0, y: -0.05, z: 0 } });
-    // ParentRefスロット
+    // ParentRef slot
     await client.addSlot({ parentId: fluxId, name: 'ParentRef', position: { x: 0, y: -0.1, z: 0 } });
-    // DuplicateSlotスロット
+    // DuplicateSlot slot
     await client.addSlot({ parentId: fluxId, name: 'Duplicate', position: { x: 0.15, y: 0, z: 0 } });
 
     let fluxData = await client.getSlot({ slotId: fluxId, depth: 1 });
@@ -553,7 +553,7 @@ async function main() {
       throw new Error('ProtoFlux slots not found');
     }
 
-    // DynamicImpulseReceiver追加
+    // Add DynamicImpulseReceiver
     await client.addComponent({
       containerSlotId: receiverSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Actions.DynamicImpulseReceiver',
@@ -571,13 +571,13 @@ async function main() {
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.RefObjectInput<[FrooxEngine]FrooxEngine.Slot>',
     });
 
-    // DuplicateSlot追加
+    // Add DuplicateSlot
     await client.addComponent({
       containerSlotId: duplicateSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Slots.DuplicateSlot',
     });
 
-    // コンポーネントID取得
+    // Get component IDs
     const [receiverData, templateRefData, parentRefData, duplicateData] = await Promise.all([
       client.getSlot({ slotId: receiverSlot.id, includeComponentData: true }),
       client.getSlot({ slotId: templateRefSlot.id, includeComponentData: true }),
@@ -590,13 +590,13 @@ async function main() {
     const parentRefComp = parentRefData.data?.components?.find((c: any) => c.componentType?.includes('RefObjectInput'));
     const duplicateComp = duplicateData.data?.components?.find((c: any) => c.componentType?.includes('DuplicateSlot'));
 
-    // Receiver設定: Tag = "AddTask"
+    // Receiver setup: Tag = "AddTask"
     if (receiverComp?.id) {
-      // Tagは GlobalValueProxy<string> を参照する必要がある - 直接設定は難しいかも
-      console.log(`  Receiver: ${receiverComp.id} (Tag設定は手動で "AddTask" に設定してね)`);
+      // Tag needs to reference GlobalValueProxy<string> - may be difficult to set directly
+      console.log(`  Receiver: ${receiverComp.id} (Please manually set Tag to "AddTask")`);
     }
 
-    // TemplateRef設定: Target = Template slot
+    // TemplateRef setup: Target = Template slot
     if (templateRefComp?.id) {
       await client.updateComponent({
         id: templateRefComp.id,
@@ -607,7 +607,7 @@ async function main() {
       console.log('  TemplateRef -> Template connected');
     }
 
-    // ParentRef設定: Target = Content slot
+    // ParentRef setup: Target = Content slot
     if (parentRefComp?.id) {
       await client.updateComponent({
         id: parentRefComp.id,
@@ -618,7 +618,7 @@ async function main() {
       console.log('  ParentRef -> Content connected');
     }
 
-    // DuplicateSlot接続
+    // DuplicateSlot connection
     if (duplicateComp?.id && receiverComp?.id && templateRefComp?.id && parentRefComp?.id) {
       await client.updateComponent({
         id: duplicateComp.id,
@@ -628,7 +628,7 @@ async function main() {
         } as any,
       });
 
-      // ReceiverのOnTriggered → DuplicateSlot
+      // Receiver's OnTriggered -> DuplicateSlot
       await client.updateComponent({
         id: receiverComp.id,
         members: {
@@ -638,7 +638,7 @@ async function main() {
     }
 
     console.log('  ProtoFlux created');
-    console.log('    -> DynamicImpulseReceiverのTagを "AddTask" に設定してね');
+    console.log('    -> Please set DynamicImpulseReceiver Tag to "AddTask"');
 
     console.log('\nUIX TODO List created!');
     console.log(`  Location: ${slotName}`);

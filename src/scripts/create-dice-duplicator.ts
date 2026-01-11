@@ -1,16 +1,16 @@
 /**
- * ダイス複製ボタン
+ * Dice Duplicator Button
  *
- * 「2」スロット内のダイスからランダムに1つ選んで複製し、DropPositionに移動させる
+ * Randomly selects and duplicates one dice from the "2" slot, then moves it to DropPosition
  *
- * 使い方: npx tsx src/scripts/create-dice-duplicator.ts [ws://localhost:3343]
+ * Usage: npx tsx src/scripts/create-dice-duplicator.ts [ws://localhost:3343]
  */
 import { ResoniteLinkClient } from '../client.js';
 
 const WS_URL = process.argv[2] || 'ws://localhost:3343';
 
-// 既存スロットのID（事前に調査済み）
-const DICE_PARENT_ID = 'Reso_33A8F';  // 「2」スロット
+// Existing slot IDs (pre-investigated)
+const DICE_PARENT_ID = 'Reso_33A8F';  // "2" slot
 const DROP_POSITION_ID = 'Reso_3863C';  // DropPosition
 
 async function main() {
@@ -20,7 +20,7 @@ async function main() {
   try {
     console.log('Creating Dice Duplicator Button...\n');
 
-    // 1. メインスロット作成
+    // 1. Create main slot
     const slotName = `DiceDuplicator_${Date.now()}`;
     await client.addSlot({
       name: slotName,
@@ -33,14 +33,14 @@ async function main() {
     const mainId = mainSlot.id;
     console.log(`  Main slot: ${mainId}`);
 
-    // Grabbable追加
+    // Add Grabbable
     await client.addComponent({
       containerSlotId: mainId,
       componentType: '[FrooxEngine]FrooxEngine.Grabbable',
     });
 
     // ============================================================
-    // 物理ボタン
+    // Physical Button
     // ============================================================
     await client.addSlot({
       parentId: mainId,
@@ -65,7 +65,7 @@ async function main() {
     const boxCollider = buttonData.data?.components?.find((c: any) => c.componentType?.includes('BoxCollider'));
     const physicalButton = buttonData.data?.components?.find((c: any) => c.componentType?.includes('PhysicalButton'));
 
-    // BoxMesh設定
+    // BoxMesh settings
     if (boxMesh?.id) {
       await client.updateComponent({
         id: boxMesh.id,
@@ -75,7 +75,7 @@ async function main() {
       });
     }
 
-    // BoxCollider設定
+    // BoxCollider settings
     if (boxCollider?.id) {
       await client.updateComponent({
         id: boxCollider.id,
@@ -85,7 +85,7 @@ async function main() {
       });
     }
 
-    // マテリアル設定（オレンジ）
+    // Material settings (orange)
     if (material?.id) {
       await client.updateComponent({
         id: material.id,
@@ -97,7 +97,7 @@ async function main() {
       });
     }
 
-    // MeshRenderer設定
+    // MeshRenderer settings
     if (meshRenderer?.id && boxMesh?.id && material?.id) {
       await client.updateComponent({
         id: meshRenderer.id,
@@ -131,7 +131,7 @@ async function main() {
       }
     }
 
-    // PhysicalButton設定
+    // PhysicalButton settings
     if (physicalButton?.id) {
       await client.updateComponent({
         id: physicalButton.id,
@@ -152,7 +152,7 @@ async function main() {
     if (!fluxSlot?.id) throw new Error('Flux not found');
     const fluxId = fluxSlot.id;
 
-    // ProtoFluxノード用スロット作成
+    // Create slots for ProtoFlux nodes
     const fluxNodes = [
       { name: 'GlobalRef', pos: { x: -1.2, y: 0, z: 0 } },
       { name: 'ButtonEvents', pos: { x: -1.0, y: 0, z: 0 } },
@@ -165,17 +165,17 @@ async function main() {
       { name: 'DuplicateSlot', pos: { x: -0.2, y: 0, z: 0 } },
       { name: 'GlobalTransform', pos: { x: 0.2, y: 0, z: 0 } },
       { name: 'SetPosition', pos: { x: 0.4, y: 0, z: 0 } },
-      // 回転用ノード
+      // Rotation nodes
       { name: 'RotMinValue', pos: { x: 0.4, y: -0.2, z: 0 } },
       { name: 'RotMaxValue', pos: { x: 0.4, y: -0.3, z: 0 } },
       { name: 'RandomFloat3', pos: { x: 0.5, y: -0.25, z: 0 } },
       { name: 'FromEuler', pos: { x: 0.6, y: -0.15, z: 0 } },
       { name: 'SetRotation', pos: { x: 0.7, y: 0, z: 0 } },
-      // 物理起動用ノード
+      // Physics activation nodes
       { name: 'FindCharController', pos: { x: 0.8, y: -0.1, z: 0 } },
       { name: 'InitialVelocity', pos: { x: 0.8, y: -0.2, z: 0 } },
       { name: 'SetVelocity', pos: { x: 0.9, y: 0, z: 0 } },
-      // DynamicImpulseTrigger用ノード
+      // DynamicImpulseTrigger nodes
       { name: 'ActivateTag', pos: { x: 1.0, y: -0.15, z: 0 } },
       { name: 'DynamicTrigger', pos: { x: 1.1, y: 0, z: 0 } },
     ];
@@ -198,21 +198,21 @@ async function main() {
     const duplicateSlotSlot = getFluxChild('DuplicateSlot');
     const globalTransformSlot = getFluxChild('GlobalTransform');
     const setPositionSlot = getFluxChild('SetPosition');
-    // 回転用
+    // For rotation
     const rotMinValueSlot = getFluxChild('RotMinValue');
     const rotMaxValueSlot = getFluxChild('RotMaxValue');
     const randomFloat3Slot = getFluxChild('RandomFloat3');
     const fromEulerSlot = getFluxChild('FromEuler');
     const setRotationSlot = getFluxChild('SetRotation');
-    // 物理起動用
+    // For physics activation
     const findCharControllerSlot = getFluxChild('FindCharController');
     const initialVelocitySlot = getFluxChild('InitialVelocity');
     const setVelocitySlot = getFluxChild('SetVelocity');
-    // DynamicImpulseTrigger用
+    // For DynamicImpulseTrigger
     const activateTagSlot = getFluxChild('ActivateTag');
     const dynamicTriggerSlot = getFluxChild('DynamicTrigger');
 
-    // コンポーネント追加
+    // Add components
     await client.addComponent({
       containerSlotId: globalRefSlot.id,
       componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalReference<[FrooxEngine]FrooxEngine.IButton>',
@@ -257,7 +257,7 @@ async function main() {
       containerSlotId: setPositionSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Transform.SetGlobalPosition',
     });
-    // 回転用コンポーネント
+    // Rotation components
     await client.addComponent({
       containerSlotId: rotMinValueSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueInput<float3>',
@@ -278,7 +278,7 @@ async function main() {
       containerSlotId: setRotationSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Transform.SetGlobalRotation',
     });
-    // 物理起動用コンポーネント
+    // Physics activation components
     await client.addComponent({
       containerSlotId: findCharControllerSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Physics.FindCharacterControllerFromSlot',
@@ -291,7 +291,7 @@ async function main() {
       containerSlotId: setVelocitySlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Physics.SetCharacterVelocity',
     });
-    // DynamicImpulseTrigger用コンポーネント
+    // DynamicImpulseTrigger components
     await client.addComponent({
       containerSlotId: activateTagSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueObjectInput<string>',
@@ -302,7 +302,7 @@ async function main() {
     });
     console.log('  ProtoFlux nodes created');
 
-    // コンポーネントID取得
+    // Get component IDs
     const [
       globalRefData,
       buttonEventsData,
@@ -360,29 +360,29 @@ async function main() {
     const duplicateSlotComp = duplicateSlotData.data?.components?.find((c: any) => c.componentType?.includes('DuplicateSlot'));
     const globalTransformComp = globalTransformData.data?.components?.find((c: any) => c.componentType?.includes('GlobalTransform'));
     const setPositionComp = setPositionData.data?.components?.find((c: any) => c.componentType?.includes('SetGlobalPosition'));
-    // 回転用
+    // For rotation
     const rotMinValueComp = rotMinValueData.data?.components?.find((c: any) => c.componentType?.includes('ValueInput'));
     const rotMaxValueComp = rotMaxValueData.data?.components?.find((c: any) => c.componentType?.includes('ValueInput'));
     const randomFloat3Comp = randomFloat3Data.data?.components?.find((c: any) => c.componentType?.includes('RandomFloat3'));
     const fromEulerComp = fromEulerData.data?.components?.find((c: any) => c.componentType?.includes('FromEuler'));
     const setRotationComp = setRotationData.data?.components?.find((c: any) => c.componentType?.includes('SetGlobalRotation'));
-    // 物理起動用
+    // For physics activation
     const findCharControllerComp = findCharControllerData.data?.components?.find((c: any) => c.componentType?.includes('FindCharacterControllerFromSlot'));
     const initialVelocityComp = initialVelocityData.data?.components?.find((c: any) => c.componentType?.includes('ValueInput'));
     const setVelocityComp = setVelocityData.data?.components?.find((c: any) => c.componentType?.includes('SetCharacterVelocity'));
-    // DynamicImpulseTrigger用
+    // For DynamicImpulseTrigger
     const activateTagComp = activateTagData.data?.components?.find((c: any) => c.componentType?.includes('ValueObjectInput'));
     const dynamicTriggerComp = dynamicTriggerData.data?.components?.find((c: any) => c.componentType?.includes('DynamicImpulseTrigger'));
 
-    // 値設定
-    // Min = 1 (Fluxをスキップ)
+    // Set values
+    // Min = 1 (skip Flux)
     if (minValueComp?.id) {
       await client.updateComponent({
         id: minValueComp.id,
         members: { Value: { $type: 'int', value: 1 } } as any,
       });
     }
-    // Max = 10 (RandomIntは排他的なので1-9を生成)
+    // Max = 10 (RandomInt is exclusive so generates 1-9)
     if (maxValueComp?.id) {
       await client.updateComponent({
         id: maxValueComp.id,
@@ -391,8 +391,8 @@ async function main() {
     }
     console.log('  Min/Max values set (1-9)');
 
-    // スロット参照設定
-    // DiceParentRef → ダイス親スロット
+    // Slot reference settings
+    // DiceParentRef → Dice parent slot
     if (diceParentRefComp?.id) {
       await client.updateComponent({
         id: diceParentRefComp.id,
@@ -409,7 +409,7 @@ async function main() {
       console.log('  DropPosRef → ' + DROP_POSITION_ID);
     }
 
-    // ボタン接続
+    // Button connection
     // GlobalReference.Reference → PhysicalButton
     if (globalRefComp?.id && physicalButton?.id) {
       await client.updateComponent({
@@ -426,7 +426,7 @@ async function main() {
     }
     console.log('  Button connected');
 
-    // RandomInt接続
+    // RandomInt connection
     if (randomIntComp?.id) {
       await client.updateComponent({
         id: randomIntComp.id,
@@ -437,7 +437,7 @@ async function main() {
       });
     }
 
-    // GetChild接続
+    // GetChild connection
     if (getChildComp?.id) {
       await client.updateComponent({
         id: getChildComp.id,
@@ -449,7 +449,7 @@ async function main() {
     }
     console.log('  GetChild connected');
 
-    // DuplicateSlot接続
+    // DuplicateSlot connection
     if (duplicateSlotComp?.id) {
       await client.updateComponent({
         id: duplicateSlotComp.id,
@@ -459,7 +459,7 @@ async function main() {
       });
     }
 
-    // フロー接続: ButtonEvents.Pressed → DuplicateSlot
+    // Flow connection: ButtonEvents.Pressed → DuplicateSlot
     if (buttonEventsComp?.id && duplicateSlotComp?.id) {
       await client.updateComponent({
         id: buttonEventsComp.id,
@@ -468,7 +468,7 @@ async function main() {
     }
     console.log('  DuplicateSlot connected');
 
-    // GlobalTransform接続（DropPositionの位置取得）
+    // GlobalTransform connection (get DropPosition location)
     if (globalTransformComp?.id && dropPosRefComp?.id) {
       await client.updateComponent({
         id: globalTransformComp.id,
@@ -476,15 +476,15 @@ async function main() {
       });
     }
 
-    // GlobalTransformのGlobalPosition出力IDを取得
+    // Get GlobalTransform.GlobalPosition output ID
     const globalTransformDetails = await client.getComponent(globalTransformComp.id);
     const globalPositionId = globalTransformDetails.data.members.GlobalPosition?.id;
 
-    // DuplicateSlotのDuplicate出力IDを取得
+    // Get DuplicateSlot.Duplicate output ID
     const duplicateSlotDetails = await client.getComponent(duplicateSlotComp.id);
     const duplicateOutputId = duplicateSlotDetails.data.members.Duplicate?.id;
 
-    // SetGlobalPosition接続
+    // SetGlobalPosition connection
     if (setPositionComp?.id) {
       await client.updateComponent({
         id: setPositionComp.id,
@@ -495,7 +495,7 @@ async function main() {
       });
     }
 
-    // フロー接続: DuplicateSlot.Next → SetGlobalPosition
+    // Flow connection: DuplicateSlot.Next → SetGlobalPosition
     const nextId = duplicateSlotDetails.data.members.Next?.id;
     if (nextId && setPositionComp?.id) {
       await client.updateComponent({
@@ -506,7 +506,7 @@ async function main() {
     console.log('  SetGlobalPosition connected');
 
     // ============================================================
-    // 回転用ノード設定
+    // For rotation node setup
     // ============================================================
     // RotMinValue = (0, 0, 0)
     if (rotMinValueComp?.id) {
@@ -524,7 +524,7 @@ async function main() {
     }
     console.log('  Rotation Min/Max values set (0-360)');
 
-    // RandomFloat3接続
+    // RandomFloat3 connection
     if (randomFloat3Comp?.id) {
       await client.updateComponent({
         id: randomFloat3Comp.id,
@@ -535,7 +535,7 @@ async function main() {
       });
     }
 
-    // FromEuler接続（RandomFloat3 → FromEuler）
+    // FromEuler connection (RandomFloat3 → FromEuler)
     if (fromEulerComp?.id && randomFloat3Comp?.id) {
       await client.updateComponent({
         id: fromEulerComp.id,
@@ -543,7 +543,7 @@ async function main() {
       });
     }
 
-    // SetGlobalRotation接続
+    // SetGlobalRotation connection
     if (setRotationComp?.id) {
       await client.updateComponent({
         id: setRotationComp.id,
@@ -554,7 +554,7 @@ async function main() {
       });
     }
 
-    // フロー接続: SetGlobalPosition.Next → SetGlobalRotation
+    // Flow connection: SetGlobalPosition.Next → SetGlobalRotation
     const setPositionDetails = await client.getComponent(setPositionComp.id);
     const positionNextId = setPositionDetails.data.members.Next?.id;
     if (positionNextId && setRotationComp?.id) {
@@ -566,9 +566,9 @@ async function main() {
     console.log('  SetGlobalRotation connected');
 
     // ============================================================
-    // 物理起動用ノード設定
+    // For physics activation node setup
     // ============================================================
-    // InitialVelocity = (0, -0.1, 0) - 軽い下向き初速
+    // InitialVelocity = (0, -0.1, 0) - light downward initial velocity
     if (initialVelocityComp?.id) {
       await client.updateComponent({
         id: initialVelocityComp.id,
@@ -585,7 +585,7 @@ async function main() {
       });
     }
 
-    // SetCharacterVelocity接続
+    // SetCharacterVelocity connection
     if (setVelocityComp?.id) {
       await client.updateComponent({
         id: setVelocityComp.id,
@@ -596,7 +596,7 @@ async function main() {
       });
     }
 
-    // フロー接続: SetGlobalRotation.Next → SetCharacterVelocity
+    // Flow connection: SetGlobalRotation.Next → SetCharacterVelocity
     const setRotationDetails = await client.getComponent(setRotationComp.id);
     const rotationNextId = setRotationDetails.data.members.Next?.id;
     if (rotationNextId && setVelocityComp?.id) {
@@ -608,9 +608,9 @@ async function main() {
     console.log('  SetCharacterVelocity connected');
 
     // ============================================================
-    // DynamicImpulseTrigger設定
+    // DynamicImpulseTrigger settings
     // ============================================================
-    // GlobalValue<string>にタグ設定
+    // Set tag on GlobalValue<string>
     if (activateTagComp?.id) {
       await client.updateComponent({
         id: activateTagComp.id,
@@ -619,7 +619,7 @@ async function main() {
     }
     console.log('  ActivateTag set to "ActivateDice"');
 
-    // DynamicImpulseTrigger接続
+    // DynamicImpulseTrigger connection
     if (dynamicTriggerComp?.id) {
       await client.updateComponent({
         id: dynamicTriggerComp.id,
@@ -630,7 +630,7 @@ async function main() {
       });
     }
 
-    // フロー接続: SetCharacterVelocity.Next → DynamicImpulseTrigger
+    // Flow connection: SetCharacterVelocity.Next → DynamicImpulseTrigger
     const setVelocityDetails = await client.getComponent(setVelocityComp.id);
     const velocityNextId = setVelocityDetails.data.members.Next?.id;
     if (velocityNextId && dynamicTriggerComp?.id) {
@@ -644,8 +644,8 @@ async function main() {
     console.log('\n========================================');
     console.log('Dice Duplicator created!');
     console.log(`  Location: ${slotName}`);
-    console.log('\nボタンを押すとランダムなダイスを複製して');
-    console.log('DropPositionにランダム回転+物理起動で移動します');
+    console.log('\nWhen pressed, a random dice will be duplicated');
+    console.log('and moved to DropPosition with random rotation and physics activation');
     console.log('========================================');
 
   } finally {

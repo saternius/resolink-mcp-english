@@ -1,14 +1,14 @@
 /**
- * 東京の天気を取得してUIXに表示するウィジェット
+ * Weather Widget that fetches Tokyo weather and displays it in UIX
  *
- * 使い方: npx tsx src/scripts/create-weather-widget.ts [ws://localhost:3343]
+ * Usage: npx tsx src/scripts/create-weather-widget.ts [ws://localhost:3343]
  *
- * 構造:
- * - UIXパネル: 天気表示
- * - 物理ボタン: 押すと天気取得
- * - ProtoFlux: ButtonEvents → StartAsyncTask → GET_String → ObjectFieldDrive → Text
+ * Structure:
+ * - UIX panel: Weather display
+ * - Physical button: Press to fetch weather
+ * - ProtoFlux: ButtonEvents -> StartAsyncTask -> GET_String -> ObjectFieldDrive -> Text
  *
- * 注意: ButtonEventsのButton参照は手動設定が必要
+ * Note: ButtonEvents Button reference needs to be set manually
  */
 import { ResoniteLinkClient } from '../client.js';
 
@@ -22,7 +22,7 @@ async function main() {
   try {
     console.log('Creating Weather Widget...\n');
 
-    // 1. メインスロット作成
+    // 1. Create main slot
     const slotName = `WeatherWidget_${Date.now()}`;
     await client.addSlot({
       name: slotName,
@@ -35,7 +35,7 @@ async function main() {
     const mainId = mainSlot.id;
     console.log(`  Main slot: ${mainId}`);
 
-    // Grabbable追加
+    // Add Grabbable
     await client.addComponent({
       containerSlotId: mainId,
       componentType: '[FrooxEngine]FrooxEngine.Grabbable',
@@ -43,7 +43,7 @@ async function main() {
     console.log('  Grabbable added');
 
     // ============================================================
-    // UIX部分（scale 0.001）
+    // UIX section (scale 0.001)
     // ============================================================
     await client.addSlot({ parentId: mainId, name: 'UIXRoot' });
     let mainData = await client.getSlot({ slotId: mainId, depth: 1 });
@@ -51,19 +51,19 @@ async function main() {
     if (!uixRootSlot?.id) throw new Error('UIXRoot not found');
     const uixRootId = uixRootSlot.id;
 
-    // UIXルートのスケールを0.001に
+    // Set UIX root scale to 0.001
     await client.updateSlot({
       id: uixRootId,
       scale: { x: 0.001, y: 0.001, z: 0.001 },
     });
 
-    // Canvas追加
+    // Add Canvas
     await client.addComponent({
       containerSlotId: uixRootId,
       componentType: '[FrooxEngine]FrooxEngine.UIX.Canvas',
     });
 
-    // UI_UnlitMaterial追加（UIXの描画順を正しくするために必要）
+    // Add UI_UnlitMaterial (required for correct UIX render order)
     await client.addComponent({
       containerSlotId: uixRootId,
       componentType: '[FrooxEngine]FrooxEngine.UI_UnlitMaterial',
@@ -80,7 +80,7 @@ async function main() {
         } as any,
       });
     }
-    // UI_UnlitMaterial の設定（ZWrite, OffsetFactor, OffsetUnits, Sidedness）
+    // UI_UnlitMaterial settings (ZWrite, OffsetFactor, OffsetUnits, Sidedness)
     if (uiMaterial?.id) {
       await client.updateComponent({
         id: uiMaterial.id,
@@ -95,7 +95,7 @@ async function main() {
     console.log('  Canvas created');
     console.log('  UI_UnlitMaterial created');
 
-    // 背景スロット
+    // Background slot
     await client.addSlot({ parentId: uixRootId, name: 'Background' });
     uixRootData = await client.getSlot({ slotId: uixRootId, depth: 1 });
     const bgSlot = uixRootData.data?.children?.find((c: any) => c.name?.value === 'Background');
@@ -131,7 +131,7 @@ async function main() {
     }
     console.log('  Background created');
 
-    // コンテンツエリア
+    // Content area
     await client.addSlot({ parentId: uixRootId, name: 'Content' });
     uixRootData = await client.getSlot({ slotId: uixRootId, depth: 1 });
     const contentSlot = uixRootData.data?.children?.find((c: any) => c.name?.value === 'Content');
@@ -168,7 +168,7 @@ async function main() {
       });
     }
 
-    // タイトル
+    // Title
     await client.addSlot({ parentId: contentId, name: 'Title' });
     contentData = await client.getSlot({ slotId: contentId, depth: 1 });
     const titleSlot = contentData.data?.children?.find((c: any) => c.name?.value === 'Title');
@@ -193,7 +193,7 @@ async function main() {
       await client.updateComponent({
         id: titleText.id,
         members: {
-          Content: { $type: 'string', value: '東京の天気' },
+          Content: { $type: 'string', value: 'Tokyo Weather' },
           Size: { $type: 'float', value: 28 },
           Color: { $type: 'colorX', value: { r: 1, g: 1, b: 1, a: 1 } },
           HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -202,8 +202,8 @@ async function main() {
     }
     console.log('  Title created');
 
-    // 天気表示エリア（背景）
-    // 注意: ImageとTextを同じスロットに置くとZ-Fightするので別スロットにする
+    // Weather display area (background)
+    // Note: Placing Image and Text on the same slot causes Z-Fighting, so use separate slots
     await client.addSlot({ parentId: contentId, name: 'WeatherDisplay' });
     contentData = await client.getSlot({ slotId: contentId, depth: 1 });
     const weatherSlot = contentData.data?.children?.find((c: any) => c.name?.value === 'WeatherDisplay');
@@ -233,7 +233,7 @@ async function main() {
       });
     }
 
-    // 天気表示テキスト（別スロット）
+    // Weather display text (separate slot)
     await client.addSlot({ parentId: weatherId, name: 'WeatherText' });
     weatherData = await client.getSlot({ slotId: weatherId, depth: 1 });
     const weatherTextSlot = weatherData.data?.children?.find((c: any) => c.name?.value === 'WeatherText');
@@ -247,7 +247,7 @@ async function main() {
     const weatherTextRect = weatherTextData.data?.components?.find((c: any) => c.componentType?.includes('RectTransform'));
     const weatherText = weatherTextData.data?.components?.find((c: any) => c.componentType?.includes('Text'));
 
-    // RectTransformを親に合わせる
+    // Match RectTransform to parent
     if (weatherTextRect?.id) {
       await client.updateComponent({
         id: weatherTextRect.id,
@@ -263,7 +263,7 @@ async function main() {
       await client.updateComponent({
         id: weatherText.id,
         members: {
-          Content: { $type: 'string', value: 'ボタンを押して取得' },
+          Content: { $type: 'string', value: 'Press button to fetch' },
           Size: { $type: 'float', value: 22 },
           Color: { $type: 'colorX', value: { r: 0.8, g: 0.9, b: 1, a: 1 } },
           HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -274,7 +274,7 @@ async function main() {
     console.log('  Weather display created');
 
     // ============================================================
-    // 物理ボタン
+    // Physical button
     // ============================================================
     await client.addSlot({
       parentId: mainId,
@@ -299,7 +299,7 @@ async function main() {
     const boxCollider = buttonData.data?.components?.find((c: any) => c.componentType?.includes('BoxCollider'));
     const physicalButton = buttonData.data?.components?.find((c: any) => c.componentType?.includes('PhysicalButton'));
 
-    // BoxMesh設定
+    // BoxMesh settings
     if (boxMesh?.id) {
       await client.updateComponent({
         id: boxMesh.id,
@@ -309,7 +309,7 @@ async function main() {
       });
     }
 
-    // BoxCollider設定
+    // BoxCollider settings
     if (boxCollider?.id) {
       await client.updateComponent({
         id: boxCollider.id,
@@ -319,7 +319,7 @@ async function main() {
       });
     }
 
-    // マテリアル設定
+    // Material settings
     if (material?.id) {
       await client.updateComponent({
         id: material.id,
@@ -331,9 +331,9 @@ async function main() {
       });
     }
 
-    // MeshRenderer設定（Materials接続）
+    // MeshRenderer settings (Materials connection)
     if (meshRenderer?.id && boxMesh?.id && material?.id) {
-      // Mesh参照設定
+      // Set Mesh reference
       await client.updateComponent({
         id: meshRenderer.id,
         members: {
@@ -341,7 +341,7 @@ async function main() {
         } as any,
       });
 
-      // Materials リスト追加（2段階）
+      // Add Materials list (2-step process)
       await client.updateComponent({
         id: meshRenderer.id,
         members: {
@@ -367,7 +367,7 @@ async function main() {
       }
     }
 
-    // PhysicalButton設定
+    // PhysicalButton settings
     if (physicalButton?.id) {
       await client.updateComponent({
         id: physicalButton.id,
@@ -388,13 +388,13 @@ async function main() {
     if (!fluxSlot?.id) throw new Error('Flux not found');
     const fluxId = fluxSlot.id;
 
-    // ProtoFluxノード用スロット作成
-    // フロー: ButtonEvents → LoadingWrite → StartAsyncTask → GET_String → Write
+    // Create ProtoFlux node slots
+    // Flow: ButtonEvents -> LoadingWrite -> StartAsyncTask -> GET_String -> Write
     const fluxNodes = [
       { name: 'GlobalRef', pos: { x: -0.9, y: 0, z: 0 } },
       { name: 'ButtonEvents', pos: { x: -0.75, y: 0, z: 0 } },
-      { name: 'LoadingText', pos: { x: -0.6, y: -0.15, z: 0 } },  // 「取得中...」固定値
-      { name: 'LoadingWrite', pos: { x: -0.45, y: 0, z: 0 } },    // 取得中を書き込む
+      { name: 'LoadingText', pos: { x: -0.6, y: -0.15, z: 0 } },  // "Loading..." fixed value
+      { name: 'LoadingWrite', pos: { x: -0.45, y: 0, z: 0 } },    // Write loading text
       { name: 'StartAsyncTask', pos: { x: -0.3, y: 0, z: 0 } },
       { name: 'GET_String', pos: { x: 0, y: 0, z: 0 } },
       { name: 'Store', pos: { x: 0.3, y: -0.1, z: 0 } },
@@ -423,8 +423,8 @@ async function main() {
     const urlStoreSlot = getFluxChild('URLStore');
     const stringToUriSlot = getFluxChild('StringToUri');
 
-    // コンポーネント追加
-    // GlobalReference<IButton> (ButtonEventsとPhysicalButtonを繋ぐ)
+    // Add components
+    // GlobalReference<IButton> (connects ButtonEvents and PhysicalButton)
     await client.addComponent({
       containerSlotId: globalRefSlot.id,
       componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalReference<[FrooxEngine]FrooxEngine.IButton>',
@@ -433,12 +433,12 @@ async function main() {
       containerSlotId: buttonEventsSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Interaction.ButtonEvents',
     });
-    // 「取得中...」固定値
+    // "Loading..." fixed value
     await client.addComponent({
       containerSlotId: loadingTextSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Variables.DataModelObjectFieldStore<string>',
     });
-    // 取得中を書き込むObjectWrite
+    // ObjectWrite to write loading text
     await client.addComponent({
       containerSlotId: loadingWriteSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectWrite<[FrooxEngine]FrooxEngine.ProtoFlux.FrooxEngineContext,string>',
@@ -463,19 +463,19 @@ async function main() {
       containerSlotId: fieldDriveSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ObjectFieldDrive<string>',
     });
-    // URL格納用 (DataModelObjectFieldStore<string>でURLを保持)
+    // URL storage (DataModelObjectFieldStore<string> to hold URL)
     await client.addComponent({
       containerSlotId: urlStoreSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Variables.DataModelObjectFieldStore<string>',
     });
-    // String → Uri 変換
+    // String -> Uri conversion
     await client.addComponent({
       containerSlotId: stringToUriSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Utility.Uris.StringToAbsoluteURI',
     });
     console.log('  ProtoFlux nodes created');
 
-    // コンポーネントID取得
+    // Get component IDs
     const [
       globalRefData,
       buttonEventsData,
@@ -515,9 +515,9 @@ async function main() {
     const urlStoreComp = urlStoreData.data?.components?.find((c: any) => c.componentType?.includes('DataModelObjectFieldStore'));
     const stringToUriComp = stringToUriData.data?.components?.find((c: any) => c.componentType?.includes('StringToAbsoluteURI'));
 
-    // URLStore に URL を設定（Storeコンポーネント経由）
-    // DataModelObjectFieldStoreをアタッチすると、自動的に+Storeコンポーネントが生成される
-    // 再取得してStoreを探す（+Store で検索）
+    // Set URL in URLStore (via Store component)
+    // When attaching DataModelObjectFieldStore, +Store component is automatically generated
+    // Re-fetch and search for Store (search for +Store)
     const urlStoreDataRefresh = await client.getSlot({ slotId: urlStoreSlot.id, includeComponentData: true });
     const urlStoreProxyComp = urlStoreDataRefresh.data?.components?.find((c: any) => c.componentType?.includes('+Store'));
     if (urlStoreProxyComp?.id) {
@@ -532,20 +532,20 @@ async function main() {
       console.log('  [WARN] URLStore Proxy not found - set URL manually');
     }
 
-    // LoadingText に「取得中...」を設定（+Storeコンポーネント経由）
+    // Set LoadingText to "Loading..." (via +Store component)
     const loadingTextDataRefresh = await client.getSlot({ slotId: loadingTextSlot.id, includeComponentData: true });
     const loadingTextProxyComp = loadingTextDataRefresh.data?.components?.find((c: any) => c.componentType?.includes('+Store'));
     if (loadingTextProxyComp?.id) {
       await client.updateComponent({
         id: loadingTextProxyComp.id,
         members: {
-          Value: { $type: 'string', value: '取得中...' },
+          Value: { $type: 'string', value: 'Loading...' },
         } as any,
       });
-      console.log('  LoadingText set: 取得中...');
+      console.log('  LoadingText set: Loading...');
     }
 
-    // 接続: StringToAbsoluteURI.Input ← URLStore
+    // Connection: StringToAbsoluteURI.Input <- URLStore
     if (stringToUriComp?.id && urlStoreComp?.id) {
       await client.updateComponent({
         id: stringToUriComp.id,
@@ -556,7 +556,7 @@ async function main() {
       console.log('  StringToAbsoluteURI.Input ← URLStore');
     }
 
-    // 接続: LoadingWrite.Value ← LoadingText
+    // Connection: LoadingWrite.Value <- LoadingText
     if (loadingWriteComp?.id && loadingTextComp?.id) {
       await client.updateComponent({
         id: loadingWriteComp.id,
@@ -567,7 +567,7 @@ async function main() {
       console.log('  LoadingWrite.Value ← LoadingText');
     }
 
-    // 接続: LoadingWrite.Variable ← Store（表示用）
+    // Connection: LoadingWrite.Variable <- Store (for display)
     if (loadingWriteComp?.id && storeComp?.id) {
       await client.updateComponent({
         id: loadingWriteComp.id,
@@ -578,7 +578,7 @@ async function main() {
       console.log('  LoadingWrite.Variable ← Store');
     }
 
-    // 接続: GlobalReference.Reference → PhysicalButton
+    // Connection: GlobalReference.Reference -> PhysicalButton
     if (globalRefComp?.id && physicalButton?.id) {
       await client.updateComponent({
         id: globalRefComp.id,
@@ -589,7 +589,7 @@ async function main() {
       console.log('  GlobalReference.Reference → PhysicalButton');
     }
 
-    // 接続: ButtonEvents.Button → GlobalReference
+    // Connection: ButtonEvents.Button -> GlobalReference
     if (buttonEventsComp?.id && globalRefComp?.id) {
       await client.updateComponent({
         id: buttonEventsComp.id,
@@ -600,7 +600,7 @@ async function main() {
       console.log('  ButtonEvents.Button → GlobalReference');
     }
 
-    // 接続: ButtonEvents.Pressed → LoadingWrite（まず「取得中...」を表示）
+    // Connection: ButtonEvents.Pressed -> LoadingWrite (first show "Loading...")
     if (buttonEventsComp?.id && loadingWriteComp?.id) {
       await client.updateComponent({
         id: buttonEventsComp.id,
@@ -611,7 +611,7 @@ async function main() {
       console.log('  ButtonEvents.Pressed → LoadingWrite');
     }
 
-    // 接続: LoadingWrite.OnWritten → StartAsyncTask（取得中表示後にリクエスト開始）
+    // Connection: LoadingWrite.OnWritten -> StartAsyncTask (start request after showing loading)
     if (loadingWriteComp?.id && startAsyncComp?.id) {
       const loadingWriteDetails = await client.getComponent(loadingWriteComp.id);
       const onWrittenId = loadingWriteDetails.data?.members?.OnWritten?.id;
@@ -626,7 +626,7 @@ async function main() {
       }
     }
 
-    // 接続: StartAsyncTask.TaskStart → GET_String
+    // Connection: StartAsyncTask.TaskStart -> GET_String
     if (startAsyncComp?.id && getStringComp?.id) {
       await client.updateComponent({
         id: startAsyncComp.id,
@@ -637,7 +637,7 @@ async function main() {
       console.log('  StartAsyncTask.TaskStart → GET_String');
     }
 
-    // 接続: GET_String.URL ← StringToAbsoluteURI
+    // Connection: GET_String.URL <- StringToAbsoluteURI
     if (getStringComp?.id && stringToUriComp?.id) {
       await client.updateComponent({
         id: getStringComp.id,
@@ -648,7 +648,7 @@ async function main() {
       console.log('  GET_String.URL ← StringToAbsoluteURI');
     }
 
-    // 接続: GET_String.OnResponse → ObjectWrite
+    // Connection: GET_String.OnResponse -> ObjectWrite
     if (getStringComp?.id && writeComp?.id) {
       const getStringDetails = await client.getComponent(getStringComp.id);
       const onResponseId = getStringDetails.data.members.OnResponse?.id;
@@ -662,7 +662,7 @@ async function main() {
         console.log('  GET_String.OnResponse → ObjectWrite');
       }
 
-      // 接続: ObjectWrite.Value ← GET_String.Content
+      // Connection: ObjectWrite.Value <- GET_String.Content
       const contentId = getStringDetails.data.members.Content?.id;
       if (contentId && writeComp?.id) {
         await client.updateComponent({
@@ -675,7 +675,7 @@ async function main() {
       }
     }
 
-    // 接続: ObjectWrite.Variable ← DataModelObjectFieldStore
+    // Connection: ObjectWrite.Variable <- DataModelObjectFieldStore
     if (writeComp?.id && storeComp?.id) {
       await client.updateComponent({
         id: writeComp.id,
@@ -686,7 +686,7 @@ async function main() {
       console.log('  ObjectWrite.Variable ← Store');
     }
 
-    // 接続: ObjectFieldDrive.Value ← Store
+    // Connection: ObjectFieldDrive.Value <- Store
     if (fieldDriveComp?.id && storeComp?.id) {
       await client.updateComponent({
         id: fieldDriveComp.id,
@@ -697,13 +697,13 @@ async function main() {
       console.log('  ObjectFieldDrive.Value ← Store');
     }
 
-    // 接続: ObjectFieldDrive.Drive → Text.Content
+    // Connection: ObjectFieldDrive.Drive -> Text.Content
     if (proxyComp?.id && weatherText?.id) {
-      // Text.ContentのフィールドIDを取得
+      // Get Text.Content field ID
       const textDetails = await client.getComponent(weatherText.id);
       const contentFieldId = textDetails.data.members.Content?.id;
 
-      // Proxy.DriveのIDを取得
+      // Get Proxy.Drive ID
       const proxyDetails = await client.getComponent(proxyComp.id);
       const driveId = proxyDetails.data.members.Drive?.id;
 
@@ -721,7 +721,7 @@ async function main() {
     console.log('\n========================================');
     console.log('Weather Widget created!');
     console.log(`  Location: ${slotName}`);
-    console.log('\nボタンを押すと東京の天気を取得して表示します');
+    console.log('\nPress the button to fetch and display Tokyo weather');
     console.log('========================================');
 
   } finally {

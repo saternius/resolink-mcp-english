@@ -19,7 +19,7 @@ async function main() {
     const gymWallZ = gymLength / 2 + 0.5 / 2;
     const doorZ = gymWallZ + 0.1;
 
-    // ルートスロット作成
+    // Create root slot
     const rootName = `AutoDoor_${Date.now()}`;
     await client.addSlot({
       parentId: gymSlotId,
@@ -32,7 +32,7 @@ async function main() {
     const doorRoot = gymData.data?.children?.find((c: any) => c.name?.value === rootName);
     if (!doorRoot?.id) throw new Error('Door root not found');
 
-    // ボックス作成ヘルパー
+    // Box creation helper
     async function createBoxPart(
       parentId: string,
       name: string,
@@ -90,15 +90,15 @@ async function main() {
     }
 
     const frameColor = { r: 0.3, g: 0.3, b: 0.35, a: 1 };
-    const doorColor = { r: 1, g: 0, b: 0, a: 0.8 }; // 赤で目立たせる
+    const doorColor = { r: 1, g: 0, b: 0, a: 0.8 }; // red to stand out
 
-    // ドアフレーム
+    // Door frame
     console.log('Creating door frame...');
     await createBoxPart(doorRoot.id, 'FrameLeft', { x: -(doorWidth + frameThickness / 2), y: doorHeight / 2, z: 0 }, { x: frameThickness, y: doorHeight + frameThickness, z: frameDepth }, frameColor, 0.6, 0.4);
     await createBoxPart(doorRoot.id, 'FrameRight', { x: doorWidth + frameThickness / 2, y: doorHeight / 2, z: 0 }, { x: frameThickness, y: doorHeight + frameThickness, z: frameDepth }, frameColor, 0.6, 0.4);
     await createBoxPart(doorRoot.id, 'FrameTop', { x: 0, y: doorHeight + frameThickness / 2, z: 0 }, { x: doorWidth * 2 + frameThickness * 2, y: frameThickness, z: frameDepth }, frameColor, 0.6, 0.4);
 
-    // スライドドア（閉じた位置で作成）
+    // Sliding doors (created in closed position)
     console.log('Creating sliding doors...');
     const closedPosL = { x: -doorWidth / 2, y: doorHeight / 2, z: 0 };
     const closedPosR = { x: doorWidth / 2, y: doorHeight / 2, z: 0 };
@@ -106,7 +106,7 @@ async function main() {
     const leftDoorId = await createBoxPart(doorRoot.id, 'DoorLeft', closedPosL, { x: doorWidth - 0.05, y: doorHeight - 0.1, z: doorThickness }, doorColor, 0.1, 0.9);
     const rightDoorId = await createBoxPart(doorRoot.id, 'DoorRight', closedPosR, { x: doorWidth - 0.05, y: doorHeight - 0.1, z: doorThickness }, doorColor, 0.1, 0.9);
 
-    // 半透明設定
+    // Semi-transparent setting
     const leftDoorData = await client.getSlot({ slotId: leftDoorId, includeComponentData: true });
     const leftMaterial = leftDoorData.data?.components?.find((c: any) => c.componentType?.includes('PBS_Metallic'));
     await client.updateComponent({ id: leftMaterial!.id!, members: { BlendMode: { $type: 'enum', value: 'Alpha', enumType: 'BlendMode' } } as any });
@@ -122,7 +122,7 @@ async function main() {
     const doorRootData = await client.getSlot({ slotId: doorRoot.id, depth: 1 });
     const fluxSlot = doorRootData.data?.children?.find((c: any) => c.name?.value === 'Flux');
 
-    // ノード用スロット
+    // Node slots
     const nodeNames = [
       'LocalUserSlot', 'GlobalPos', 'DoorPos', 'Distance', 'Threshold', 'Compare',
       'OpenPosL', 'ClosedPosL', 'OpenPosR', 'ClosedPosR',
@@ -175,7 +175,7 @@ async function main() {
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.ValueLessThan<float>',
     });
 
-    // 開閉位置 (float3)
+    // Open/close positions (float3)
     await client.addComponent({
       containerSlotId: getNodeSlot('OpenPosL')!.id!,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueInput<float3>',
@@ -251,19 +251,19 @@ async function main() {
 
     console.log('Setting values...');
 
-    // ドア検出位置
+    // Door detection position
     await client.updateComponent({
       id: doorPosComp!.id!,
       members: { Value: { $type: 'float3', value: { x: 0, y: 2, z: 35 } } } as any,
     });
 
-    // 閾値 5m
+    // Threshold 5m
     await client.updateComponent({
       id: thresholdComp!.id!,
       members: { Value: { $type: 'float', value: 5 } } as any,
     });
 
-    // 開閉位置 (float3)
+    // Open positions (float3)
     const openL = { x: -doorWidth - 0.3, y: doorHeight / 2, z: 0 };
     const openR = { x: doorWidth + 0.3, y: doorHeight / 2, z: 0 };
 
@@ -280,11 +280,11 @@ async function main() {
       members: { Instance: { $type: 'reference', targetId: localUserComp!.id! } } as any,
     });
 
-    // GlobalPositionを取得
+    // Get GlobalPosition
     const globalPosDetails = await client.getComponent(globalPosComp!.id!);
     const globalPositionId = globalPosDetails.data!.members!.GlobalPosition?.id;
 
-    // Distance接続
+    // Distance connection
     await client.updateComponent({
       id: distanceComp!.id!,
       members: {
@@ -293,7 +293,7 @@ async function main() {
       } as any,
     });
 
-    // Compare接続
+    // Compare connection
     await client.updateComponent({
       id: compareComp!.id!,
       members: {
@@ -302,7 +302,7 @@ async function main() {
       } as any,
     });
 
-    // Conditional接続 (左)
+    // Conditional connection (left)
     await client.updateComponent({
       id: conditionalLComp!.id!,
       members: {
@@ -312,7 +312,7 @@ async function main() {
       } as any,
     });
 
-    // Conditional接続 (右)
+    // Conditional connection (right)
     await client.updateComponent({
       id: conditionalRComp!.id!,
       members: {
@@ -322,7 +322,7 @@ async function main() {
       } as any,
     });
 
-    // SmoothLerp接続
+    // SmoothLerp connection
     await client.updateComponent({
       id: smoothLerpLComp!.id!,
       members: { Input: { $type: 'reference', targetId: conditionalLComp!.id! } } as any,
@@ -332,7 +332,7 @@ async function main() {
       members: { Input: { $type: 'reference', targetId: conditionalRComp!.id! } } as any,
     });
 
-    // Drive接続
+    // Drive connection
     await client.updateComponent({
       id: driveLComp!.id!,
       members: { Value: { $type: 'reference', targetId: smoothLerpLComp!.id! } } as any,
@@ -342,7 +342,7 @@ async function main() {
       members: { Value: { $type: 'reference', targetId: smoothLerpRComp!.id! } } as any,
     });
 
-    // DriveのProxyを取得してドアのPositionに接続
+    // Get Drive Proxy and connect to door Position
     console.log('Connecting drives to door positions...');
     await new Promise(resolve => setTimeout(resolve, 200));
 
@@ -352,21 +352,21 @@ async function main() {
     const driveRProxy = driveRSlotData.data?.components?.find((c: any) => c.componentType?.includes('Proxy'));
 
     if (driveLProxy && driveRProxy) {
-      // 左ドアのPositionフィールドID
+      // Left door Position field ID
       const leftDoorSlotData = await client.getSlot({ slotId: leftDoorId, depth: 0 });
       const leftPosId = leftDoorSlotData.data?.position?.id;
 
-      // 右ドアのPositionフィールドID
+      // Right door Position field ID
       const rightDoorSlotData = await client.getSlot({ slotId: rightDoorId, depth: 0 });
       const rightPosId = rightDoorSlotData.data?.position?.id;
 
-      // ProxyのDriveを取得
+      // Get Proxy Drive
       const driveLProxyDetails = await client.getComponent(driveLProxy!.id!);
       const driveLDriveId = driveLProxyDetails.data!.members!.Drive?.id;
       const driveRProxyDetails = await client.getComponent(driveRProxy!.id!);
       const driveRDriveId = driveRProxyDetails.data!.members!.Drive?.id;
 
-      // Drive接続
+      // Drive connections
       await client.updateComponent({
         id: driveLProxy!.id!,
         members: { Drive: { $type: 'reference', id: driveLDriveId, targetId: leftPosId } } as any,

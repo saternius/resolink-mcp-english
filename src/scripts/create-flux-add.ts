@@ -1,9 +1,9 @@
 /**
- * ProtoFlux 1+1 作成スクリプト
+ * ProtoFlux 1+1 Creation Script
  *
- * 2つの ValueInput<int> ノードを足し算して結果を表示するデモ
+ * Demo that adds two ValueInput<int> nodes together and displays the result
  *
- * 使い方: npx tsx src/scripts/create-flux-add.ts [ws://localhost:58971]
+ * Usage: npx tsx src/scripts/create-flux-add.ts [ws://localhost:58971]
  */
 import { ResoniteLinkClient } from '../client.js';
 
@@ -17,7 +17,7 @@ async function main() {
     console.log('Creating 1+1 ProtoFlux...\n');
 
     // Create container slot
-    const slotName = `Flux_${Date.now()}`; // ユニークな名前
+    const slotName = `Flux_${Date.now()}`; // unique name
     await client.addSlot({
       name: slotName,
       position: { x: 0, y: 1.5, z: 2 },

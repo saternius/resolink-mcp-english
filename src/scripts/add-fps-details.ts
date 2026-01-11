@@ -71,15 +71,15 @@ async function main() {
   await client.connect();
 
   try {
-    console.log('=== 追加オブジェクト配置開始 ===\n');
+    console.log('=== Adding additional objects ===\n');
 
-    // マップを探す
+    // Find map
     const map = await client.findSlotByName('FPS_RuinsMap', 'Root', 1);
     if (!map?.id) throw new Error('FPS_RuinsMap not found');
     const mapId = map.id;
 
-    // === 追加の瓦礫 ===
-    console.log('瓦礫を追加中...');
+    // === Additional rubble ===
+    console.log('Adding rubble...');
     const rubblePositions = [
       { x: -20, y: 0, z: -5, sx: 2, sy: 0.8, sz: 1.5 },
       { x: -18, y: 0, z: 8, sx: 1.5, sy: 0.5, sz: 1.2 },
@@ -95,8 +95,8 @@ async function main() {
       await createBox(client, mapId, `Rubble_Extra_${i}`, { x: p.x, y: p.sy/2, z: p.z }, { x: p.sx, y: p.sy, z: p.sz }, RUBBLE, 0.1);
     }
 
-    // === 倒れた街灯 ===
-    console.log('倒れた街灯を追加中...');
+    // === Fallen street lamps ===
+    console.log('Adding fallen street lamps...');
     await client.addSlot({ parentId: mapId, name: 'FallenLamp1', position: { x: -12, y: 0.15, z: 10 },
       rotation: { x: 0, y: 0.38, z: 0.7, w: 0.6 }, isActive: true });
     const lamp1 = await client.findSlotByName('FallenLamp1', mapId, 1);
@@ -113,7 +113,7 @@ async function main() {
       await createBox(client, lamp2.id, 'Light', { x: 0, y: 3.2, z: 0 }, { x: 0.4, y: 0.2, z: 0.25 }, DARK_METAL, 0.3, 0.5);
     }
 
-    // 立っている街灯
+    // Standing street lamps
     const standingLampPos = [
       { x: -22, y: 0, z: 0 },
       { x: 22, y: 0, z: 0 },
@@ -131,8 +131,8 @@ async function main() {
       }
     }
 
-    // === 電柱 ===
-    console.log('電柱を追加中...');
+    // === Power poles ===
+    console.log('Adding power poles...');
     const polePositions = [
       { x: -23, z: -12 },
       { x: 23, z: 12 },
@@ -149,9 +149,9 @@ async function main() {
       }
     }
 
-    // === ゴミ箱 (倒れたり立ったり) ===
-    console.log('ゴミ箱を追加中...');
-    // 立っているゴミ箱
+    // === Trash cans (standing or fallen) ===
+    console.log('Adding trash cans...');
+    // Standing trash cans
     const trashStandPos = [
       { x: -18, z: -2 },
       { x: 18, z: 2 },
@@ -166,7 +166,7 @@ async function main() {
         await createBox(client, trash.id, 'Lid', { x: 0, y: 0.85, z: 0 }, { x: 0.55, y: 0.1, z: 0.55 }, GREEN_METAL, 0.3, 0.3);
       }
     }
-    // 倒れたゴミ箱
+    // Fallen trash can
     await client.addSlot({ parentId: mapId, name: 'TrashCan_Fallen', position: { x: -6, y: 0.25, z: -15 },
       rotation: { x: 0, y: 0.2, z: 0.7, w: 0.7 }, isActive: true });
     const trashFallen = await client.findSlotByName('TrashCan_Fallen', mapId, 1);
@@ -174,8 +174,8 @@ async function main() {
       await createBox(client, trashFallen.id, 'Body', { x: 0, y: 0, z: 0 }, { x: 0.5, y: 0.8, z: 0.5 }, GREEN_METAL, 0.3, 0.3);
     }
 
-    // === 追加の車 (廃車) ===
-    console.log('廃車を追加中...');
+    // === Additional cars (wrecked) ===
+    console.log('Adding wrecked cars...');
     await client.addSlot({ parentId: mapId, name: 'Car3_Burned', position: { x: -18, y: 0, z: -12 }, isActive: true });
     const car3 = await client.findSlotByName('Car3_Burned', mapId, 1);
     if (car3?.id) {
@@ -191,8 +191,8 @@ async function main() {
       await createBox(client, car4.id, 'Hood', { x: 0, y: 0.7, z: 1.5 }, { x: 1.6, y: 0.1, z: 1 }, RUST, 0.3, 0.3);
     }
 
-    // === 有刺鉄線バリケード ===
-    console.log('有刺鉄線を追加中...');
+    // === Barbed wire barricades ===
+    console.log('Adding barbed wire...');
     const barbedWirePos = [
       { x: -8, z: 12, rot: 0 },
       { x: 8, z: -12, rot: 0.7 },
@@ -211,8 +211,8 @@ async function main() {
       }
     }
 
-    // === 土嚢の壁 ===
-    console.log('土嚢の壁を追加中...');
+    // === Sandbag walls ===
+    console.log('Adding sandbag walls...');
     await client.addSlot({ parentId: mapId, name: 'SandbagWall1', position: { x: 6, y: 0, z: 12 }, isActive: true });
     const sb1 = await client.findSlotByName('SandbagWall1', mapId, 1);
     if (sb1?.id) {
@@ -240,8 +240,8 @@ async function main() {
       }
     }
 
-    // === 壊れたフェンス ===
-    console.log('壊れたフェンスを追加中...');
+    // === Broken fences ===
+    console.log('Adding broken fences...');
     await client.addSlot({ parentId: mapId, name: 'BrokenFence1', position: { x: -20, y: 0, z: 5 }, isActive: true });
     const fence1 = await client.findSlotByName('BrokenFence1', mapId, 1);
     if (fence1?.id) {
@@ -249,7 +249,7 @@ async function main() {
       await createBox(client, fence1.id, 'Post2', { x: 1.5, y: 0.5, z: 0 }, { x: 0.1, y: 1, z: 0.1 }, RUST, 0.3, 0.5);
       await createBox(client, fence1.id, 'Post3', { x: 3, y: 0.6, z: 0 }, { x: 0.1, y: 1.2, z: 0.1 }, RUST, 0.3, 0.5);
       await createBox(client, fence1.id, 'Mesh1', { x: 0.75, y: 0.5, z: 0 }, { x: 1.4, y: 0.8, z: 0.02 }, { r: 0.3, g: 0.3, b: 0.32 }, 0.3, 0.4);
-      // 倒れた部分
+      // Fallen section
       await client.addSlot({ parentId: fence1.id, name: 'FallenSection', position: { x: 2.25, y: 0.2, z: 0.5 },
         rotation: { x: 0.5, y: 0, z: 0.2, w: 0.84 }, isActive: true });
       const fallen = await client.findSlotByName('FallenSection', fence1.id, 1);
@@ -258,8 +258,8 @@ async function main() {
       }
     }
 
-    // === タイヤ ===
-    console.log('タイヤを追加中...');
+    // === Tires ===
+    console.log('Adding tires...');
     const tirePositions = [
       { x: -15, y: 0.3, z: 3 },
       { x: -14.5, y: 0.3, z: 3.5 },
@@ -271,8 +271,8 @@ async function main() {
       await createBox(client, mapId, `Tire_${i}`, { x: p.x, y: p.y, z: p.z }, { x: 0.6, y: 0.2, z: 0.6 }, DARK_METAL, 0.2);
     }
 
-    // === ブルーシート/タープ ===
-    console.log('ブルーシートを追加中...');
+    // === Blue tarps ===
+    console.log('Adding blue tarps...');
     await client.addSlot({ parentId: mapId, name: 'Tarp1', position: { x: -5, y: 1.5, z: -20 },
       rotation: { x: 0.1, y: 0, z: 0.1, w: 0.99 }, isActive: true });
     const tarp1 = await client.findSlotByName('Tarp1', mapId, 1);
@@ -280,9 +280,9 @@ async function main() {
       await createBox(client, tarp1.id, 'Sheet', { x: 0, y: 0, z: 0 }, { x: 3, y: 0.02, z: 2 }, TARP_BLUE, 0.3);
     }
 
-    // === 看板/標識 ===
-    console.log('看板を追加中...');
-    // 倒れた道路標識
+    // === Signs/signboards ===
+    console.log('Adding signs...');
+    // Fallen road sign
     await client.addSlot({ parentId: mapId, name: 'FallenSign', position: { x: 12, y: 0.1, z: 5 },
       rotation: { x: 0, y: 0.3, z: 0.65, w: 0.7 }, isActive: true });
     const sign = await client.findSlotByName('FallenSign', mapId, 1);
@@ -291,7 +291,7 @@ async function main() {
       await createBox(client, sign.id, 'Sign', { x: 0, y: 2.1, z: 0 }, { x: 0.6, y: 0.6, z: 0.05 }, YELLOW, 0.3);
     }
 
-    // 警告看板
+    // Warning sign
     await client.addSlot({ parentId: mapId, name: 'WarningSign', position: { x: -2, y: 0, z: 15 }, isActive: true });
     const warn = await client.findSlotByName('WarningSign', mapId, 1);
     if (warn?.id) {
@@ -299,8 +299,8 @@ async function main() {
       await createBox(client, warn.id, 'Board', { x: 0, y: 1.3, z: 0 }, { x: 0.5, y: 0.4, z: 0.03 }, RED, 0.3);
     }
 
-    // === パレット ===
-    console.log('パレットを追加中...');
+    // === Pallets ===
+    console.log('Adding pallets...');
     const palletPos = [
       { x: -18, z: 20 },
       { x: 18, z: -20 },
@@ -318,8 +318,8 @@ async function main() {
       }
     }
 
-    // === 割れたガラス ===
-    console.log('割れたガラスを追加中...');
+    // === Broken glass ===
+    console.log('Adding broken glass...');
     const glassPositions = [
       { x: 14, z: -12 },
       { x: 13.5, z: -13 },
@@ -331,8 +331,8 @@ async function main() {
         { x: 0.3 + Math.random() * 0.3, y: 0.02, z: 0.2 + Math.random() * 0.3 }, GLASS_BROKEN, 0.8);
     }
 
-    // === 追加のコンクリートブロック ===
-    console.log('コンクリートブロックを追加中...');
+    // === Additional concrete blocks ===
+    console.log('Adding concrete blocks...');
     const blockPositions = [
       { x: -3, y: 0.25, z: 8 },
       { x: 15, y: 0.25, z: 3 },
@@ -343,21 +343,21 @@ async function main() {
       await createBox(client, mapId, `ConcreteBlock_${i}`, { x: p.x, y: p.y, z: p.z }, { x: 0.8, y: 0.5, z: 0.4 }, CONCRETE, 0.2);
     }
 
-    console.log('\n=== 追加オブジェクト配置完了 ===');
-    console.log('  + 瓦礫 x8');
-    console.log('  + 街灯 x6 (倒れた x2, 立っている x4)');
-    console.log('  + 電柱 x2');
-    console.log('  + ゴミ箱 x4');
-    console.log('  + 廃車 x2');
-    console.log('  + 有刺鉄線 x2');
-    console.log('  + 土嚢の壁 x2');
-    console.log('  + 壊れたフェンス x1');
-    console.log('  + タイヤ x4');
-    console.log('  + ブルーシート x1');
-    console.log('  + 看板 x2');
-    console.log('  + パレット x2');
-    console.log('  + 割れたガラス x3');
-    console.log('  + コンクリートブロック x3');
+    console.log('\n=== Additional objects placement complete ===');
+    console.log('  + Rubble x8');
+    console.log('  + Street lamps x6 (fallen x2, standing x4)');
+    console.log('  + Power poles x2');
+    console.log('  + Trash cans x4');
+    console.log('  + Wrecked cars x2');
+    console.log('  + Barbed wire x2');
+    console.log('  + Sandbag walls x2');
+    console.log('  + Broken fence x1');
+    console.log('  + Tires x4');
+    console.log('  + Blue tarp x1');
+    console.log('  + Signs x2');
+    console.log('  + Pallets x2');
+    console.log('  + Broken glass x3');
+    console.log('  + Concrete blocks x3');
 
   } finally {
     client.disconnect();

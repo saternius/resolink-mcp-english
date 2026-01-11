@@ -7,21 +7,21 @@ async function main() {
   await client.connect();
 
   try {
-    // ValueInputを変更する
-    // Reso_2DB9B は Add の B入力 (現在値: 2)
-    // Reso_2DE19 は Mul の B入力 (現在値: 4)
+    // Change ValueInput
+    // Reso_2DB9B is Add's B input (current value: 2)
+    // Reso_2DE19 is Mul's B input (current value: 4)
 
-    console.log('=== 現在の値 ===');
+    console.log('=== Current Values ===');
 
-    // 現在の値を取得
+    // Get current values
     const addBInput = await client.getComponent('Reso_2DB9B');
     const mulBInput = await client.getComponent('Reso_2DE19');
 
     console.log('Add.B (Reso_2DB9B):', (addBInput.data?.members as any)?.Value?.value);
     console.log('Mul.B (Reso_2DE19):', (mulBInput.data?.members as any)?.Value?.value);
 
-    // Add.B を 3 に変更
-    console.log('\n=== Add.B を 3 に変更 ===');
+    // Change Add.B to 3
+    console.log('\n=== Changing Add.B to 3 ===');
     const result1 = await client.updateComponent({
       id: 'Reso_2DB9B',
       members: {
@@ -30,8 +30,8 @@ async function main() {
     });
     console.log('Result:', result1.success, result1.errorInfo);
 
-    // Mul.B を 5 に変更
-    console.log('\n=== Mul.B を 5 に変更 ===');
+    // Change Mul.B to 5
+    console.log('\n=== Changing Mul.B to 5 ===');
     const result2 = await client.updateComponent({
       id: 'Reso_2DE19',
       members: {
@@ -40,16 +40,16 @@ async function main() {
     });
     console.log('Result:', result2.success, result2.errorInfo);
 
-    // 変更後の値を確認
-    console.log('\n=== 変更後の値 ===');
+    // Check values after change
+    console.log('\n=== Values After Change ===');
     const addBInputAfter = await client.getComponent('Reso_2DB9B');
     const mulBInputAfter = await client.getComponent('Reso_2DE19');
 
     console.log('Add.B (Reso_2DB9B):', (addBInputAfter.data?.members as any)?.Value?.value);
     console.log('Mul.B (Reso_2DE19):', (mulBInputAfter.data?.members as any)?.Value?.value);
 
-    console.log('\nResoniteで確認してみてください！');
-    console.log('計算: (A + 3) × 5 になっているはず');
+    console.log('\nCheck it in Resonite!');
+    console.log('Calculation should be: (A + 3) * 5');
 
   } finally {
     client.disconnect();

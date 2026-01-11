@@ -1,11 +1,11 @@
 /**
- * 虹色に光って回転する箱を作成するスクリプト
+ * Script to create a rainbow-glowing rotating box
  *
- * - BoxMesh + MeshRenderer + PBS_Metallic で箱を作成
- * - Wiggler で回転アニメーション
- * - ProtoFlux (WorldTimeFloat → HSV_ToColorX → ValueFieldDrive) で虹色に発光
+ * - Creates box with BoxMesh + MeshRenderer + PBS_Metallic
+ * - Rotation animation with Wiggler
+ * - Rainbow glow with ProtoFlux (WorldTimeFloat → HSV_ToColorX → ValueFieldDrive)
  *
- * 使い方: npx tsx src/scripts/create-rainbow-box.ts [ws://localhost:58971]
+ * Usage: npx tsx src/scripts/create-rainbow-box.ts [ws://localhost:58971]
  */
 import { ResoniteLinkClient } from '../client.js';
 
@@ -18,7 +18,7 @@ async function main() {
   try {
     console.log('Creating Rainbow Rotating Box...\n');
 
-    // 1. メインスロット作成
+    // 1. Create main slot
     const slotName = `RainbowBox_${Date.now()}`;
     await client.addSlot({
       name: slotName,
@@ -30,7 +30,7 @@ async function main() {
     const containerId = container.id;
     console.log(`  Created: ${slotName}`);
 
-    // 2. 箱のコンポーネントを追加
+    // 2. Add box components
     await client.addComponent({
       containerSlotId: containerId,
       componentType: '[FrooxEngine]FrooxEngine.BoxMesh',
@@ -49,7 +49,7 @@ async function main() {
     });
     console.log('  Added BoxMesh, MeshRenderer, PBS_Metallic, Wiggler');
 
-    // 3. コンポーネントID取得
+    // 3. Get component IDs
     const slotData = await client.getSlot({
       slotId: containerId,
       depth: 0,
@@ -67,7 +67,7 @@ async function main() {
     }
     console.log('  Got component IDs');
 
-    // 4. BoxMesh サイズ設定
+    // 4. Set BoxMesh size
     await client.updateComponent({
       id: boxMesh.id,
       members: {
@@ -76,7 +76,7 @@ async function main() {
     });
     console.log('  Set box size: 0.3m');
 
-    // 5. MeshRenderer に Mesh と Material を設定
+    // 5. Set Mesh and Material on MeshRenderer
     await client.updateComponent({
       id: meshRenderer.id,
       members: {
@@ -84,14 +84,14 @@ async function main() {
       } as any
     });
 
-    // Materials リストに要素追加
+    // Add element to Materials list
     await client.updateComponent({
       id: meshRenderer.id,
       members: {
         Materials: { $action: 'add', $type: 'reference', targetId: null },
       } as any
     });
-    // targetId 設定
+    // Set targetId
     await client.updateComponent({
       id: meshRenderer.id,
       members: {
@@ -100,7 +100,7 @@ async function main() {
     });
     console.log('  Linked Mesh and Material to MeshRenderer');
 
-    // 6. マテリアル設定（発光させる）
+    // 6. Material settings (make it glow)
     await client.updateComponent({
       id: material.id,
       members: {
@@ -109,7 +109,7 @@ async function main() {
     });
     console.log('  Set initial emissive color');
 
-    // 7. Wiggler 設定（回転）
+    // 7. Wiggler settings (rotation)
     await client.updateComponent({
       id: wiggler.id,
       members: {
@@ -119,14 +119,14 @@ async function main() {
     });
     console.log('  Configured Wiggler for rotation');
 
-    // 8. ProtoFlux 用の子スロット作成
+    // 8. Create child slots for ProtoFlux
     await client.addSlot({ parentId: containerId, name: 'WorldTime', position: { x: -0.3, y: 0, z: 0 }, isActive: true });
     await client.addSlot({ parentId: containerId, name: 'HSV', position: { x: 0, y: 0, z: 0 }, isActive: true });
     await client.addSlot({ parentId: containerId, name: 'Drive', position: { x: 0.3, y: 0, z: 0 }, isActive: true });
     await client.addSlot({ parentId: containerId, name: 'SatInput', position: { x: -0.3, y: -0.1, z: 0 }, isActive: true });
     await client.addSlot({ parentId: containerId, name: 'ValInput', position: { x: -0.3, y: -0.2, z: 0 }, isActive: true });
 
-    // 子スロットID取得
+    // Get child slot IDs
     const containerData = await client.getSlot({ slotId: containerId, depth: 1, includeComponentData: false });
     const children = containerData.data?.children || [];
 
@@ -141,7 +141,7 @@ async function main() {
     }
     console.log('  Created ProtoFlux slots');
 
-    // 9. ProtoFlux コンポーネント追加
+    // 9. Add ProtoFlux components
     await client.addComponent({
       containerSlotId: worldTimeSlot.id,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Time.WorldTimeFloat',
@@ -164,7 +164,7 @@ async function main() {
     });
     console.log('  Added ProtoFlux components');
 
-    // 10. ProtoFlux コンポーネントID取得
+    // 10. Get ProtoFlux component IDs
     const [worldTimeData, hsvData, driveData, satData, valData] = await Promise.all([
       client.getSlot({ slotId: worldTimeSlot.id, depth: 0, includeComponentData: true }),
       client.getSlot({ slotId: hsvSlot.id, depth: 0, includeComponentData: true }),
@@ -184,7 +184,7 @@ async function main() {
     }
     console.log('  Got ProtoFlux component IDs');
 
-    // 11. S, V の値を設定（彩度・明度を最大に）
+    // 11. Set S, V values (max saturation and brightness)
     await client.updateComponent({
       id: satComp.id,
       members: { Value: { $type: 'float', value: 1.0 } } as any,
@@ -195,7 +195,7 @@ async function main() {
     });
     console.log('  Set S=1.0, V=1.0');
 
-    // 12. HSV_ToColorX に接続
+    // 12. Connect to HSV_ToColorX
     await client.updateComponent({
       id: hsvComp.id,
       members: {
@@ -206,7 +206,7 @@ async function main() {
     });
     console.log('  Connected WorldTime→H, SatInput→S, ValInput→V');
 
-    // 13. ValueFieldDrive に接続
+    // 13. Connect to ValueFieldDrive
     await client.updateComponent({
       id: driveComp.id,
       members: {
@@ -215,24 +215,24 @@ async function main() {
     });
     console.log('  Connected HSV→ValueFieldDrive');
 
-    // 14. マテリアルの EmissiveColor フィールドをドライブ
-    // まず PBS_Metallic の詳細を取得して EmissiveColor フィールドIDを探す
+    // 14. Drive material's EmissiveColor field
+    // First get PBS_Metallic details to find EmissiveColor field ID
     const materialDetail = await client.getComponent(material.id!);
     console.log('  Material members:', Object.keys(materialDetail.data?.members || {}));
 
-    // Drive の DriveTarget にフィールド参照を設定
-    // Proxy コンポーネントが必要
+    // Set field reference to Drive's DriveTarget
+    // Proxy component is required
     await client.addComponent({
       containerSlotId: driveSlot.id,
       componentType: 'FrooxEngine.ProtoFlux.CoreNodes.FieldDriveBase<colorX>+Proxy',
     });
 
-    // Proxy ID取得
+    // Get Proxy ID
     const driveSlotData = await client.getSlot({ slotId: driveSlot.id, depth: 0, includeComponentData: true });
     const proxyComp = driveSlotData.data?.components?.find(c => c.componentType?.includes('Proxy'));
 
     if (proxyComp?.id) {
-      // Proxy の LinkedField に PBS_Metallic の EmissiveColor を設定
+      // Set PBS_Metallic's EmissiveColor to Proxy's LinkedField
       await client.updateComponent({
         id: proxyComp.id,
         members: {
@@ -240,7 +240,7 @@ async function main() {
         } as any,
       });
 
-      // Drive の Drive に Proxy を設定
+      // Set Proxy to Drive's Drive
       await client.updateComponent({
         id: driveComp.id,
         members: {

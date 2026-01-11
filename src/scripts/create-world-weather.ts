@@ -1,24 +1,24 @@
 /**
- * 世界の都市の天気を表示するUIXウィジェット
+ * UIX Widget that displays weather for world cities
  *
- * 使い方: npx tsx src/scripts/create-world-weather.ts [ws://localhost:3343]
+ * Usage: npx tsx src/scripts/create-world-weather.ts [ws://localhost:3343]
  *
- * 構造:
- * - UIXパネル: 複数都市の天気表示
- * - UIXボタン: 更新ボタン
- * - ProtoFlux: DynamicImpulseReceiver → 各都市のGET_String
+ * Structure:
+ * - UIX panel: Weather display for multiple cities
+ * - UIX button: Refresh button
+ * - ProtoFlux: DynamicImpulseReceiver -> GET_String for each city
  */
 import { ResoniteLinkClient } from '../client.js';
 
 const WS_URL = process.argv[2] || 'ws://localhost:3343';
 
-// 都市設定（UTCからのオフセット時間）
+// City settings (UTC offset hours)
 const CITIES = [
-  { name: '東京', query: 'Tokyo', offset: 9 },
-  { name: 'ニューヨーク', query: 'New+York', offset: -5 },
-  { name: 'ロンドン', query: 'London', offset: 0 },
-  { name: 'パリ', query: 'Paris', offset: 1 },
-  { name: 'シドニー', query: 'Sydney', offset: 11 },
+  { name: 'Tokyo', query: 'Tokyo', offset: 9 },
+  { name: 'New York', query: 'New+York', offset: -5 },
+  { name: 'London', query: 'London', offset: 0 },
+  { name: 'Paris', query: 'Paris', offset: 1 },
+  { name: 'Sydney', query: 'Sydney', offset: 11 },
 ];
 
 async function main() {
@@ -28,7 +28,7 @@ async function main() {
   try {
     console.log('Creating World Weather Widget...\n');
 
-    // 1. メインスロット作成
+    // 1. Create main slot
     const slotName = `WorldWeather_${Date.now()}`;
     await client.addSlot({
       name: slotName,
@@ -41,14 +41,14 @@ async function main() {
     const mainId = mainSlot.id;
     console.log(`  Main slot: ${mainId}`);
 
-    // Grabbable追加
+    // Add Grabbable
     await client.addComponent({
       containerSlotId: mainId,
       componentType: '[FrooxEngine]FrooxEngine.Grabbable',
     });
 
     // ============================================================
-    // UIX部分
+    // UIX section
     // ============================================================
     await client.addSlot({ parentId: mainId, name: 'UIXRoot' });
     let mainData = await client.getSlot({ slotId: mainId, depth: 1 });
@@ -56,19 +56,19 @@ async function main() {
     if (!uixRootSlot?.id) throw new Error('UIXRoot not found');
     const uixRootId = uixRootSlot.id;
 
-    // UIXルートのスケールを0.001に
+    // Set UIX root scale to 0.001
     await client.updateSlot({
       id: uixRootId,
       scale: { x: 0.001, y: 0.001, z: 0.001 },
     });
 
-    // Canvas追加
+    // Add Canvas
     await client.addComponent({
       containerSlotId: uixRootId,
       componentType: '[FrooxEngine]FrooxEngine.UIX.Canvas',
     });
 
-    // UI_UnlitMaterial追加
+    // Add UI_UnlitMaterial
     await client.addComponent({
       containerSlotId: uixRootId,
       componentType: '[FrooxEngine]FrooxEngine.UI_UnlitMaterial',
@@ -78,7 +78,7 @@ async function main() {
     const canvas = uixRootData.data?.components?.find((c: any) => c.componentType?.includes('Canvas'));
     const uiMaterial = uixRootData.data?.components?.find((c: any) => c.componentType?.includes('UI_UnlitMaterial'));
 
-    // Canvas設定
+    // Canvas settings
     if (canvas?.id) {
       await client.updateComponent({
         id: canvas.id,
@@ -88,7 +88,7 @@ async function main() {
       });
     }
 
-    // UI_UnlitMaterial設定
+    // UI_UnlitMaterial settings
     if (uiMaterial?.id) {
       await client.updateComponent({
         id: uiMaterial.id,
@@ -102,7 +102,7 @@ async function main() {
     }
     console.log('  Canvas & UI_UnlitMaterial created');
 
-    // 背景
+    // Background
     await client.addSlot({ parentId: uixRootId, name: 'Background' });
     uixRootData = await client.getSlot({ slotId: uixRootId, depth: 1 });
     const bgSlot = uixRootData.data?.children?.find((c: any) => c.name?.value === 'Background');
@@ -137,7 +137,7 @@ async function main() {
     }
     console.log('  Background created');
 
-    // コンテンツエリア
+    // Content area
     await client.addSlot({ parentId: uixRootId, name: 'Content' });
     uixRootData = await client.getSlot({ slotId: uixRootId, depth: 1 });
     const contentSlot = uixRootData.data?.children?.find((c: any) => c.name?.value === 'Content');
@@ -174,7 +174,7 @@ async function main() {
       });
     }
 
-    // タイトル
+    // Title
     await client.addSlot({ parentId: contentId, name: 'Title' });
     contentData = await client.getSlot({ slotId: contentId, depth: 1 });
     const titleSlot = contentData.data?.children?.find((c: any) => c.name?.value === 'Title');
@@ -198,7 +198,7 @@ async function main() {
       await client.updateComponent({
         id: titleText.id,
         members: {
-          Content: { $type: 'string', value: '世界の天気' },
+          Content: { $type: 'string', value: 'World Weather' },
           Size: { $type: 'float', value: 32 },
           Color: { $type: 'colorX', value: { r: 1, g: 1, b: 1, a: 1 } },
           HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -207,7 +207,7 @@ async function main() {
     }
     console.log('  Title created');
 
-    // 各都市の行を作成
+    // Create rows for each city
     const cityTextIds: { [key: string]: string } = {};
     const cityTimeIds: { [key: string]: string } = {};
 
@@ -242,7 +242,7 @@ async function main() {
         });
       }
 
-      // 都市名
+      // City name
       await client.addSlot({ parentId: cityId, name: 'CityName' });
       cityData = await client.getSlot({ slotId: cityId, depth: 1 });
       const cityNameSlot = cityData.data?.children?.find((c: any) => c.name?.value === 'CityName');
@@ -274,7 +274,7 @@ async function main() {
         });
       }
 
-      // 時間表示
+      // Time display
       await client.addSlot({ parentId: cityId, name: 'Time' });
       cityData = await client.getSlot({ slotId: cityId, depth: 1 });
       const timeSlot = cityData.data?.children?.find((c: any) => c.name?.value === 'Time');
@@ -307,7 +307,7 @@ async function main() {
         cityTimeIds[city.query] = timeText.id;
       }
 
-      // 天気表示
+      // Weather display
       await client.addSlot({ parentId: cityId, name: 'Weather' });
       cityData = await client.getSlot({ slotId: cityId, depth: 1 });
       const weatherSlot = cityData.data?.children?.find((c: any) => c.name?.value === 'Weather');
@@ -343,7 +343,7 @@ async function main() {
       console.log(`  City row created: ${city.name}`);
     }
 
-    // 更新ボタン
+    // Refresh button
     await client.addSlot({ parentId: contentId, name: 'RefreshButton' });
     contentData = await client.getSlot({ slotId: contentId, depth: 1 });
     const btnSlot = contentData.data?.children?.find((c: any) => c.name?.value === 'RefreshButton');
@@ -384,7 +384,7 @@ async function main() {
       });
     }
 
-    // ボタンテキスト
+    // Button text
     await client.addSlot({ parentId: btnId, name: 'ButtonText' });
     btnData = await client.getSlot({ slotId: btnId, depth: 1 });
     const btnTextSlot = btnData.data?.children?.find((c: any) => c.name?.value === 'ButtonText');
@@ -411,7 +411,7 @@ async function main() {
       await client.updateComponent({
         id: btnText.id,
         members: {
-          Content: { $type: 'string', value: '更新' },
+          Content: { $type: 'string', value: 'Refresh' },
           Size: { $type: 'float', value: 26 },
           Color: { $type: 'colorX', value: { r: 1, g: 1, b: 1, a: 1 } },
           HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -429,9 +429,9 @@ async function main() {
     const fluxSlot = mainData.data?.children?.find((c: any) => c.name?.value === 'Flux');
     const fluxId = fluxSlot.id;
 
-    // Tag用のGlobalValue<string>を作成
+    // Create GlobalValue<string> for Tag
     await client.addSlot({ parentId: fluxId, name: 'TagValue', position: { x: -1.2, y: 0.2, z: 0 } });
-    // UtcNow（共有）
+    // UtcNow (shared)
     await client.addSlot({ parentId: fluxId, name: 'UtcNow', position: { x: -1.5, y: 0.5, z: 0 } });
 
     let fluxData = await client.getSlot({ slotId: fluxId, depth: 1 });
@@ -452,7 +452,7 @@ async function main() {
     const tagComp = tagData.data?.components?.find((c: any) => c.componentType?.includes('GlobalValue'));
     const utcNowComp = utcNowData.data?.components?.find((c: any) => c.componentType?.includes('UtcNow'));
 
-    // Tag値設定
+    // Tag value setup
     if (tagComp?.id) {
       await client.updateComponent({
         id: tagComp.id,
@@ -463,7 +463,7 @@ async function main() {
     }
     console.log('  TagValue & UtcNow created');
 
-    // 各都市のProtoFluxノード作成
+    // Create ProtoFlux nodes for each city
     const cityFluxData: { [key: string]: any } = {};
 
     for (let i = 0; i < CITIES.length; i++) {
@@ -471,7 +471,7 @@ async function main() {
       const xOffset = -0.6 + i * 0.4;
       const yBase = -0.3;
 
-      // 各都市用のスロット（Receiverを追加）
+      // Slots for each city (add Receiver)
       await client.addSlot({ parentId: fluxId, name: `Receiver_${city.query}`, position: { x: xOffset, y: yBase + 0.2, z: 0 } });
       await client.addSlot({ parentId: fluxId, name: `Async_${city.query}`, position: { x: xOffset, y: yBase, z: 0 } });
       await client.addSlot({ parentId: fluxId, name: `GET_${city.query}`, position: { x: xOffset, y: yBase - 0.2, z: 0 } });
@@ -480,7 +480,7 @@ async function main() {
       await client.addSlot({ parentId: fluxId, name: `Drive_${city.query}`, position: { x: xOffset, y: yBase - 0.8, z: 0 } });
       await client.addSlot({ parentId: fluxId, name: `URL_${city.query}`, position: { x: xOffset - 0.15, y: yBase - 0.1, z: 0 } });
       await client.addSlot({ parentId: fluxId, name: `ToUri_${city.query}`, position: { x: xOffset, y: yBase - 0.1, z: 0 } });
-      // 時間計算用
+      // Time calculation
       await client.addSlot({ parentId: fluxId, name: `Offset_${city.query}`, position: { x: xOffset, y: yBase + 0.5, z: 0 } });
       await client.addSlot({ parentId: fluxId, name: `TimeSpan_${city.query}`, position: { x: xOffset, y: yBase + 0.4, z: 0 } });
       await client.addSlot({ parentId: fluxId, name: `AddTime_${city.query}`, position: { x: xOffset + 0.15, y: yBase + 0.5, z: 0 } });
@@ -501,14 +501,14 @@ async function main() {
       const driveSlot = fluxData.data?.children?.find((c: any) => c.name?.value === `Drive_${city.query}`);
       const urlSlot = fluxData.data?.children?.find((c: any) => c.name?.value === `URL_${city.query}`);
       const toUriSlot = fluxData.data?.children?.find((c: any) => c.name?.value === `ToUri_${city.query}`);
-      // 時間計算用スロット
+      // Time calculation slots
       const offsetSlot = fluxData.data?.children?.find((c: any) => c.name?.value === `Offset_${city.query}`);
       const timeSpanSlot = fluxData.data?.children?.find((c: any) => c.name?.value === `TimeSpan_${city.query}`);
       const addTimeSlot = fluxData.data?.children?.find((c: any) => c.name?.value === `AddTime_${city.query}`);
       const formatSlot = fluxData.data?.children?.find((c: any) => c.name?.value === `Format_${city.query}`);
       const timeDriveSlot = fluxData.data?.children?.find((c: any) => c.name?.value === `TimeDrive_${city.query}`);
 
-      // コンポーネント追加
+      // Add components
       await client.addComponent({
         containerSlotId: receiverSlot.id,
         componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Actions.DynamicImpulseReceiver',
@@ -541,7 +541,7 @@ async function main() {
         containerSlotId: toUriSlot.id,
         componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Utility.Uris.StringToAbsoluteURI',
       });
-      // 時間計算用コンポーネント
+      // Time calculation components
       await client.addComponent({
         containerSlotId: offsetSlot.id,
         componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueInput<double>',
@@ -563,7 +563,7 @@ async function main() {
         componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ObjectFieldDrive<string>',
       });
 
-      // コンポーネント取得
+      // Get components
       const [receiverData, asyncData, getData, storeData, writeData, driveData, urlData, toUriData,
              offsetData, timeSpanData, addTimeData, formatData, timeDriveData] = await Promise.all([
         client.getSlot({ slotId: receiverSlot.id, includeComponentData: true }),
@@ -590,7 +590,7 @@ async function main() {
       const proxyComp = driveData.data?.components?.find((c: any) => c.componentType?.includes('Proxy'));
       const urlStoreComp = urlData.data?.components?.find((c: any) => c.componentType?.includes('DataModelObjectFieldStore'));
       const toUriComp = toUriData.data?.components?.find((c: any) => c.componentType?.includes('StringToAbsoluteURI'));
-      // 時間計算用
+      // Time calculation
       const offsetComp = offsetData.data?.components?.find((c: any) => c.componentType?.includes('ValueInput'));
       const timeSpanComp = timeSpanData.data?.components?.find((c: any) => c.componentType?.includes('TimeSpanFromHours'));
       const addTimeComp = addTimeData.data?.components?.find((c: any) => c.componentType?.includes('Add_DateTime_TimeSpan'));
@@ -601,7 +601,7 @@ async function main() {
       cityFluxData[city.query] = { receiverComp, asyncComp, getComp, storeComp, writeComp, driveComp, proxyComp, urlStoreComp, toUriComp,
                                    offsetComp, timeSpanComp, addTimeComp, formatComp, timeDriveComp, timeProxyComp };
 
-      // URL設定
+      // URL setup
       const urlDataRefresh = await client.getSlot({ slotId: urlSlot.id, includeComponentData: true });
       const urlProxyComp = urlDataRefresh.data?.components?.find((c: any) => c.componentType?.includes('+Store'));
       if (urlProxyComp?.id) {
@@ -612,7 +612,7 @@ async function main() {
         });
       }
 
-      // 接続: StringToAbsoluteURI.Input ← URLStore
+      // Connection: StringToAbsoluteURI.Input <- URLStore
       if (toUriComp?.id && urlStoreComp?.id) {
         await client.updateComponent({
           id: toUriComp.id,
@@ -620,7 +620,7 @@ async function main() {
         });
       }
 
-      // 接続: DynamicImpulseReceiver.Tag ← GlobalValue<string>
+      // Connection: DynamicImpulseReceiver.Tag <- GlobalValue<string>
       if (receiverComp?.id && tagComp?.id) {
         await client.updateComponent({
           id: receiverComp.id,
@@ -628,7 +628,7 @@ async function main() {
         });
       }
 
-      // 接続: DynamicImpulseReceiver.OnTriggered → StartAsyncTask
+      // Connection: DynamicImpulseReceiver.OnTriggered -> StartAsyncTask
       if (receiverComp?.id && asyncComp?.id) {
         const receiverDetails = await client.getComponent(receiverComp.id);
         const onTriggeredId = receiverDetails.data.members.OnTriggered?.id;
@@ -640,7 +640,7 @@ async function main() {
         }
       }
 
-      // 接続: StartAsyncTask.TaskStart → GET_String
+      // Connection: StartAsyncTask.TaskStart -> GET_String
       if (asyncComp?.id && getComp?.id) {
         await client.updateComponent({
           id: asyncComp.id,
@@ -648,7 +648,7 @@ async function main() {
         });
       }
 
-      // 接続: GET_String.URL ← StringToAbsoluteURI
+      // Connection: GET_String.URL <- StringToAbsoluteURI
       if (getComp?.id && toUriComp?.id) {
         await client.updateComponent({
           id: getComp.id,
@@ -656,7 +656,7 @@ async function main() {
         });
       }
 
-      // 接続: GET_String.OnResponse → ObjectWrite
+      // Connection: GET_String.OnResponse -> ObjectWrite
       if (getComp?.id && writeComp?.id) {
         const getDetails = await client.getComponent(getComp.id);
         const onResponseId = getDetails.data.members.OnResponse?.id;
@@ -667,7 +667,7 @@ async function main() {
           });
         }
 
-        // 接続: ObjectWrite.Value ← GET_String.Content
+        // Connection: ObjectWrite.Value <- GET_String.Content
         const contentId = getDetails.data.members.Content?.id;
         if (contentId) {
           await client.updateComponent({
@@ -677,7 +677,7 @@ async function main() {
         }
       }
 
-      // 接続: ObjectWrite.Variable ← Store
+      // Connection: ObjectWrite.Variable <- Store
       if (writeComp?.id && storeComp?.id) {
         await client.updateComponent({
           id: writeComp.id,
@@ -685,7 +685,7 @@ async function main() {
         });
       }
 
-      // 接続: ObjectFieldDrive.Value ← Store
+      // Connection: ObjectFieldDrive.Value <- Store
       if (driveComp?.id && storeComp?.id) {
         await client.updateComponent({
           id: driveComp.id,
@@ -693,7 +693,7 @@ async function main() {
         });
       }
 
-      // 接続: ObjectFieldDrive.Drive → Text.Content
+      // Connection: ObjectFieldDrive.Drive -> Text.Content
       if (proxyComp?.id && cityTextIds[city.query]) {
         const textDetails = await client.getComponent(cityTextIds[city.query]);
         const contentFieldId = textDetails.data.members.Content?.id;
@@ -709,8 +709,8 @@ async function main() {
         }
       }
 
-      // ============ 時間計算用接続 ============
-      // ValueInput にオフセット値を設定
+      // ============ Time calculation connections ============
+      // Set offset value to ValueInput
       if (offsetComp?.id) {
         await client.updateComponent({
           id: offsetComp.id,
@@ -746,9 +746,9 @@ async function main() {
         });
       }
 
-      // ObjectFieldDrive(time) - コンポーネント情報を再取得してから接続
+      // ObjectFieldDrive(time) - Re-fetch component info before connection
       if (timeDriveSlot?.id && cityTimeIds[city.query]) {
-        // 少し待ってから再取得
+        // Wait a bit then re-fetch
         await new Promise(resolve => setTimeout(resolve, 100));
 
         const timeDriveDataRefresh = await client.getSlot({ slotId: timeDriveSlot.id, includeComponentData: true });
@@ -786,7 +786,7 @@ async function main() {
     console.log('\n========================================');
     console.log('World Weather Widget created!');
     console.log(`  Location: ${slotName}`);
-    console.log('\n更新ボタンを押すと各都市の天気を取得します');
+    console.log('\nPress the Refresh button to fetch weather for each city');
     console.log('========================================');
 
   } finally {

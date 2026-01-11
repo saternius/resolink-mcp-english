@@ -51,11 +51,11 @@ function summarizeSlot(slot: Slot, includeComponents = false): any {
 function summarizeComponent(comp: Component): any {
   const summary: any = {
     id: comp.id,
-    type: comp.componentType?.split('.').pop(), // 短い型名
+    type: comp.componentType?.split('.').pop(), // Short type name
   };
 
   if (comp.members) {
-    // メンバーのキーとIDだけ（値は省略）
+    // Only member keys and IDs (values omitted)
     summary.members = Object.fromEntries(
       Object.entries(comp.members).map(([key, val]: [string, any]) => [
         key,

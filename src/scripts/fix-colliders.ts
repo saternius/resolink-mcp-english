@@ -6,7 +6,7 @@ async function enableCharacterColliders(client: ResoniteLinkClient, slotId: stri
   const slotData = await client.getSlot({ slotId, depth: 0, includeComponentData: true });
   if (!slotData.success || !slotData.data) return count;
 
-  // このスロットのBoxColliderを更新
+  // Update BoxCollider on this slot
   if (slotData.data.components) {
     for (const comp of slotData.data.components) {
       if (comp.componentType === 'FrooxEngine.BoxCollider' && comp.id) {
@@ -19,16 +19,16 @@ async function enableCharacterColliders(client: ResoniteLinkClient, slotId: stri
           });
           count++;
           if (count % 20 === 0) {
-            console.log(`  ${count}個のコライダーを更新...`);
+            console.log(`  Updated ${count} colliders...`);
           }
         } catch (e) {
-          // エラーは無視
+          // Ignore errors
         }
       }
     }
   }
 
-  // 子スロットを再帰的に処理
+  // Recursively process child slots
   if (slotData.data.children) {
     for (const child of slotData.data.children) {
       if (child.id) {
@@ -46,19 +46,19 @@ async function main() {
   await client.connect();
 
   try {
-    console.log('=== CharacterColliderを有効化 ===\n');
+    console.log('=== Enabling CharacterCollider ===\n');
 
-    // FPS_RuinsMapを探す
+    // Find FPS_RuinsMap
     const map = await client.findSlotByName('FPS_RuinsMap', 'Root', 1);
     if (!map?.id) {
-      console.log('FPS_RuinsMap が見つかりません');
+      console.log('FPS_RuinsMap not found');
       return;
     }
 
-    console.log('コライダーを検索・更新中...');
+    console.log('Searching and updating colliders...');
     const count = await enableCharacterColliders(client, map.id);
 
-    console.log(`\n=== 完了: ${count}個のBoxColliderのCharacterColliderを有効化 ===`);
+    console.log(`\n=== Complete: Enabled CharacterCollider on ${count} BoxColliders ===`);
 
   } finally {
     client.disconnect();

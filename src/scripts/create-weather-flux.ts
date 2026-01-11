@@ -1,10 +1,10 @@
 /**
- * 天気予報取得 ProtoFlux スクリプト
+ * Weather Forecast ProtoFlux Script
  *
- * wttr.in APIを使用して天気を取得し表示する
- * PhysicalButton + ButtonEvents + DataModelObjectFieldStore で永続化
+ * Fetches and displays weather using wttr.in API
+ * Persistent storage with PhysicalButton + ButtonEvents + DataModelObjectFieldStore
  *
- * 使い方: npx tsx src/scripts/create-weather-flux.ts [ws://localhost:3343]
+ * Usage: npx tsx src/scripts/create-weather-flux.ts [ws://localhost:3343]
  */
 import { ResoniteLinkClient } from '../client.js';
 

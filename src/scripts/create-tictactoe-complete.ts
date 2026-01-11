@@ -1,14 +1,14 @@
 /**
- * 完全動作するマルバツゲーム作成スクリプト
- * UI + ProtoFluxロジック一括作成
+ * Complete Tic-Tac-Toe Game Creation Script
+ * UI + ProtoFlux logic batch creation
  *
- * 使い方: npx tsx src/scripts/create-tictactoe-complete.ts [ws://localhost:3343]
+ * Usage: npx tsx src/scripts/create-tictactoe-complete.ts [ws://localhost:3343]
  */
 import { ResoniteLinkClient } from '../client.js';
 
 const WS_URL = process.argv[2] || 'ws://localhost:3343';
 
-// ヘルパー: コンポーネントを探す (typeまたはcomponentTypeを確認)
+// Helper: Find component (check type or componentType)
 function findComponent(data: any, typeIncludes: string, exclude?: string) {
   return data?.components?.find((c: any) => {
     const typeStr = c.type || c.componentType || '';
@@ -18,7 +18,7 @@ function findComponent(data: any, typeIncludes: string, exclude?: string) {
   });
 }
 
-// ヘルパー: 複数のコンポーネントを探す
+// Helper: Find multiple components
 function findComponents(data: any, typeIncludes: string, exclude?: string) {
   return data?.components?.filter((c: any) => {
     const typeStr = c.type || c.componentType || '';
@@ -28,7 +28,7 @@ function findComponents(data: any, typeIncludes: string, exclude?: string) {
   }) || [];
 }
 
-// ヘルパー: スロットIDを取得
+// Helper: Get slot ID
 async function getChildSlotId(client: ResoniteLinkClient, parentId: string, name: string): Promise<string> {
   const data = await client.getSlot({ slotId: parentId, depth: 1 });
   const child = data.data?.children?.find((c: any) => c.name?.value === name);
@@ -43,7 +43,7 @@ async function main() {
   try {
     console.log('Creating Complete Tic-Tac-Toe Game...\n');
 
-    // ========== 1. メインスロット作成 ==========
+    // ========== 1. Create main slot ==========
     const slotName = `TicTacToe_Play_${Date.now()}`;
     await client.addSlot({
       name: slotName,
@@ -89,29 +89,29 @@ async function main() {
     }
     console.log('  Canvas created');
 
-    // ========== 3. GameState スロット（ゲーム状態管理）==========
+    // ========== 3. GameState slot (game state management) ==========
     await client.addSlot({ parentId: mainId, name: 'GameState' });
     const gameStateId = await getChildSlotId(client, mainId, 'GameState');
 
-    // isOTurn (○のターンかどうか)
+    // isOTurn (whether it's O's turn)
     await client.addComponent({ containerSlotId: gameStateId, componentType: '[FrooxEngine]FrooxEngine.ValueField<bool>' });
-    // isGameOver (ゲーム終了フラグ)
+    // isGameOver (game over flag)
     await client.addComponent({ containerSlotId: gameStateId, componentType: '[FrooxEngine]FrooxEngine.ValueField<bool>' });
 
-    // 9個のセル状態 (ValueField<string>)
+    // 9 cell states (ValueField<string>)
     for (let i = 0; i < 9; i++) {
       await client.addComponent({ containerSlotId: gameStateId, componentType: '[FrooxEngine]FrooxEngine.ValueField<string>' });
     }
-    // resultText (結果表示用)
+    // resultText (for result display)
     await client.addComponent({ containerSlotId: gameStateId, componentType: '[FrooxEngine]FrooxEngine.ValueField<string>' });
 
     let gameStateData = await client.getSlot({ slotId: gameStateId, includeComponentData: true });
     const boolFields = findComponents(gameStateData.data, 'ValueField<bool>');
     const stringFields = findComponents(gameStateData.data, 'ValueField<string>');
-    const isOTurnField = boolFields[0];  // 最初のbool
-    const isGameOverField = boolFields[1];  // 2番目のbool
-    const cellFields = stringFields.slice(0, 9);  // 最初の9個のstring
-    const resultTextField = stringFields[9];  // 10番目のstring
+    const isOTurnField = boolFields[0];  // first bool
+    const isGameOverField = boolFields[1];  // second bool
+    const cellFields = stringFields.slice(0, 9);  // first 9 strings
+    const resultTextField = stringFields[9];  // 10th string
 
     if (isOTurnField?.id) {
       await client.updateComponent({
@@ -127,7 +127,7 @@ async function main() {
     }
     console.log(`  GameState: isOTurn=${isOTurnField?.id}, isGameOver=${isGameOverField?.id}, cells=${cellFields.length}, resultText=${resultTextField?.id}`);
 
-    // ========== 4. 背景 ==========
+    // ========== 4. Background ==========
     await client.addSlot({ parentId: mainId, name: 'Background' });
     const bgId = await getChildSlotId(client, mainId, 'Background');
 
@@ -213,7 +213,7 @@ async function main() {
       await client.updateComponent({
         id: headerText.id,
         members: {
-          Content: { $type: 'string', value: '○×ゲーム' },
+          Content: { $type: 'string', value: 'Tic-Tac-Toe' },
           Size: { $type: 'float', value: 36 },
           Color: { $type: 'colorX', value: { r: 1, g: 1, b: 1, a: 1 } },
           HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -244,7 +244,7 @@ async function main() {
       await client.updateComponent({
         id: turnText.id,
         members: {
-          Content: { $type: 'string', value: '○ の番' },
+          Content: { $type: 'string', value: "O's Turn" },
           Size: { $type: 'float', value: 24 },
           Color: { $type: 'colorX', value: { r: 0.5, g: 0.8, b: 1, a: 1 } },
           HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -253,7 +253,7 @@ async function main() {
     }
     console.log('  TurnDisplay created');
 
-    // ========== 7.5. ResultDisplay (勝敗結果表示) ==========
+    // ========== 7.5. ResultDisplay (win/lose result display) ==========
     await client.addSlot({ parentId: contentId, name: 'ResultDisplay' });
     const resultDisplayId = await getChildSlotId(client, contentId, 'ResultDisplay');
 
@@ -283,7 +283,7 @@ async function main() {
       });
     }
 
-    // ResultDisplayは常に表示（空文字なら見えない、結果が入ったら表示される）
+    // ResultDisplay is always shown (invisible when empty string, visible when result is set)
     console.log('  ResultDisplay created');
 
     // ========== 8. Board (3x3 Grid) ==========
@@ -315,11 +315,11 @@ async function main() {
       });
     }
 
-    // セル情報を保存
+    // Save cell info
     const cellTextIds: string[] = [];
     const cellTriggerIds: string[] = [];  // ButtonDynamicImpulseTrigger IDs
 
-    // 3行 x 3列 作成
+    // Create 3 rows x 3 columns
     for (let row = 0; row < 3; row++) {
       await client.addSlot({ parentId: boardId, name: `Row${row}` });
       const rowId = await getChildSlotId(client, boardId, `Row${row}`);
@@ -384,13 +384,13 @@ async function main() {
             id: cellTrigger.id,
             members: {
               PressedTag: { $type: 'string', value: `Cell_${cellIdx}` },
-              Target: { $type: 'reference', targetId: mainId },  // 同じゲーム内のReceiverのみ反応
+              Target: { $type: 'reference', targetId: mainId },  // Only respond to Receivers in the same game
             } as any,
           });
           cellTriggerIds.push(cellTrigger.id);
         }
 
-        // セル内テキスト
+        // Cell text
         await client.addSlot({ parentId: cellId, name: 'Text' });
         const textSlotId = await getChildSlotId(client, cellId, 'Text');
 
@@ -459,7 +459,7 @@ async function main() {
         id: resetTrigger.id,
         members: {
           PressedTag: { $type: 'string', value: 'Reset' },
-          Target: { $type: 'reference', targetId: mainId },  // 同じゲーム内のReceiverのみ反応
+          Target: { $type: 'reference', targetId: mainId },  // Only receivers in the same game respond
         } as any,
       });
     }
@@ -488,7 +488,7 @@ async function main() {
       await client.updateComponent({
         id: resetTextComp.id,
         members: {
-          Content: { $type: 'string', value: 'リセット' },
+          Content: { $type: 'string', value: 'Reset' },
           Size: { $type: 'float', value: 22 },
           Color: { $type: 'colorX', value: { r: 1, g: 1, b: 1, a: 1 } },
           HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -498,7 +498,7 @@ async function main() {
     }
     console.log('  ResetButton created');
 
-    // ========== 10. ValueFieldDrive でセルテキストをドライブ ==========
+    // ========== 10. Drive cell text with ValueFieldDrive ==========
     for (let i = 0; i < 9 && i < cellFields.length && i < cellTextIds.length; i++) {
       const cellField = cellFields[i];
       const textCompId = cellTextIds[i];
@@ -508,21 +508,21 @@ async function main() {
         componentType: '[FrooxEngine]FrooxEngine.ValueDriver<string>',
       });
 
-      // 追加されたドライブを取得
+      // Get added drive
       gameStateData = await client.getSlot({ slotId: gameStateId, includeComponentData: true });
       const drives = findComponents(gameStateData.data, 'ValueDriver');
       const drive = drives[drives.length - 1];
 
       if (drive?.id) {
-        // TextコンポーネントのContentフィールドIDを取得
+        // Get Text component's Content field ID
         const textDetails = await client.getComponent(textCompId);
         const contentFieldId = textDetails.data?.members?.Content?.id;
 
-        // ValueField<string>のValueフィールドIDを取得
+        // Get ValueField<string>'s Value field ID
         const cellFieldDetails = await client.getComponent(cellField.id);
         const cellValueId = cellFieldDetails.data?.members?.Value?.id;
 
-        // ドライブ設定
+        // Drive settings
         const driveDetails = await client.getComponent(drive.id);
         const driveTargetId = driveDetails.data?.members?.DriveTarget?.id;
 
@@ -537,7 +537,7 @@ async function main() {
     }
     console.log('  Cell text drives connected');
 
-    // ========== 11. TurnDisplayをドライブ (BooleanValueDriver) ==========
+    // ========== 11. Drive TurnDisplay (BooleanValueDriver) ==========
     await client.addComponent({
       containerSlotId: gameStateId,
       componentType: '[FrooxEngine]FrooxEngine.BooleanValueDriver<string>',
@@ -547,24 +547,24 @@ async function main() {
     const turnDriver = findComponent(gameStateData.data, 'BooleanValueDriver');
 
     if (turnDriver?.id && turnText?.id && isOTurnField?.id) {
-      // TurnTextのContentフィールドIDを取得
+      // Get TurnText's Content field ID
       const turnTextDetails = await client.getComponent(turnText.id);
       const turnContentId = turnTextDetails.data?.members?.Content?.id;
 
-      // BooleanValueDriverの詳細を取得
+      // Get BooleanValueDriver details
       const turnDriverDetails = await client.getComponent(turnDriver.id);
       const targetFieldId = turnDriverDetails.data?.members?.TargetField?.id;
 
-      // TrueValue/FalseValueを設定
+      // Set TrueValue/FalseValue
       await client.updateComponent({
         id: turnDriver.id,
         members: {
-          TrueValue: { $type: 'string', value: '○ の番' },
-          FalseValue: { $type: 'string', value: '× の番' },
+          TrueValue: { $type: 'string', value: "O's Turn" },
+          FalseValue: { $type: 'string', value: "X's Turn" },
         } as any,
       });
 
-      // TargetFieldを設定（FieldDrive - ドライブ先）
+      // Set TargetField (FieldDrive - drive target)
       await client.updateComponent({
         id: turnDriver.id,
         members: {
@@ -572,7 +572,7 @@ async function main() {
         } as any,
       });
 
-      // StateをisOTurnからドライブするためにValueDriver<bool>を追加
+      // Add ValueDriver<bool> to drive State from isOTurn
       await client.addComponent({
         containerSlotId: gameStateId,
         componentType: '[FrooxEngine]FrooxEngine.ValueDriver<bool>',
@@ -583,11 +583,11 @@ async function main() {
       const stateDrive = stateDrives[stateDrives.length - 1];
 
       if (stateDrive?.id) {
-        // isOTurnFieldのValueフィールドIDを取得
+        // Get isOTurnField's Value field ID
         const isOTurnDetails = await client.getComponent(isOTurnField.id);
         const isOTurnValueId = isOTurnDetails.data?.members?.Value?.id;
 
-        // BooleanValueDriverのStateフィールドIDを取得
+        // Get BooleanValueDriver's State field ID
         const turnDriverRefresh = await client.getComponent(turnDriver.id);
         const stateFieldId = turnDriverRefresh.data?.members?.State?.id;
 
@@ -606,14 +606,14 @@ async function main() {
     }
     console.log('  TurnDisplay driver connected');
 
-    // ========== 11.5. 表示切り替え（一時的に無効化） ==========
-    // 注意: SlotのActiveSelfをドライブするにはコンポーネントIDが必要だが、
-    // スロットはコンポーネントではないためResoniteLinkで直接取得できない。
-    // 現時点では、TurnDisplayとResultDisplayの両方を表示する。
-    // ResultDisplayはゲーム終了時のみ結果テキストを表示する（それ以外は空）。
+    // ========== 11.5. Display switching (temporarily disabled) ==========
+    // Note: To drive Slot's ActiveSelf, component ID is needed, but
+    // slots are not components so cannot be directly obtained via ResoniteLink.
+    // For now, both TurnDisplay and ResultDisplay are shown.
+    // ResultDisplay only shows result text when game ends (empty otherwise).
     console.log('  Display visibility drivers skipped (not implemented yet)');
 
-    // ResultDisplay.Text.Content を resultTextField.Value でドライブ
+    // Drive ResultDisplay.Text.Content with resultTextField.Value
     if (resultText?.id && resultTextField?.id) {
       await client.addComponent({
         containerSlotId: gameStateId,
@@ -642,12 +642,12 @@ async function main() {
     }
     console.log('  ResultDisplay text driver connected');
 
-    // ========== 12. ProtoFlux (ゲームロジック) ==========
-    // 重要: 1スロットに1つのProtoFluxコンポーネントのみ
+    // ========== 12. ProtoFlux (game logic) ==========
+    // Important: Only one ProtoFlux component per slot
     await client.addSlot({ parentId: mainId, name: 'Flux' });
     const fluxId = await getChildSlotId(client, mainId, 'Flux');
 
-    // 各セル用のProtoFlux
+    // ProtoFlux for each cell
     for (let i = 0; i < 9; i++) {
       const cellField = cellFields[i];
       if (!cellField?.id) continue;
@@ -657,7 +657,7 @@ async function main() {
       const baseX = (col - 1) * 1.5;
       const baseY = (1 - row) * 1.2;
 
-      // セル用の親スロット
+      // Parent slot for cell
       await client.addSlot({
         parentId: fluxId,
         name: `Cell_${i}`,
@@ -665,17 +665,17 @@ async function main() {
       });
       const cellLogicId = await getChildSlotId(client, fluxId, `Cell_${i}`);
 
-      // 各ノード用のスロットを作成
+      // Create slots for each node
       // CellSource = ObjectValueSource<string>, TurnSource = ValueSource<bool>
-      // Note: EmptyStrは不要。ValueField<string>の初期値はnullなので、Equals.Bを接続しないことでnull比較になる
-      // GameOverSource, NotGameOver, ConditionAnd: ゲーム終了チェック用
-      // CheckWinTrigger: セル更新後に勝敗チェックを呼び出す
+      // Note: EmptyStr not needed. ValueField<string>'s initial value is null, so not connecting Equals.B makes it a null comparison
+      // GameOverSource, NotGameOver, ConditionAnd: For game over check
+      // CheckWinTrigger: Call win check after cell update
       const nodeNames = ['Receiver', 'TagInput', 'If', 'Equals', 'Conditional', 'OInput', 'XInput', 'CellSource', 'TurnSource', 'Write', 'TurnWrite', 'Not', 'GameOverSource', 'NotGameOver', 'ConditionAnd', 'CheckWinTrigger', 'CheckWinTag'];
       for (const name of nodeNames) {
         await client.addSlot({ parentId: cellLogicId, name });
       }
 
-      // スロットIDを取得
+      // Get slot IDs
       const cellLogicData = await client.getSlot({ slotId: cellLogicId, depth: 1 });
       const getNodeSlotId = (name: string) => cellLogicData.data?.children?.find((c: any) => c.name?.value === name)?.id;
 
@@ -697,33 +697,33 @@ async function main() {
       const checkWinTriggerSlotId = getNodeSlotId('CheckWinTrigger');
       const checkWinTagSlotId = getNodeSlotId('CheckWinTag');
 
-      // 各スロットにコンポーネントを追加
+      // Add components to each slot
       await client.addComponent({ containerSlotId: receiverSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Actions.DynamicImpulseReceiver' });
-      // GlobalValue<string>はIGlobalValueProxy<string>を実装（DynamicImpulseReceiver.Tagに必要）
+      // GlobalValue<string> implements IGlobalValueProxy<string> (needed for DynamicImpulseReceiver.Tag)
       await client.addComponent({ containerSlotId: tagInputSlotId, componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalValue<string>' });
       await client.addComponent({ containerSlotId: ifSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.If' });
       await client.addComponent({ containerSlotId: equalsSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectEquals<string>' });
       await client.addComponent({ containerSlotId: conditionalSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectConditional<string>' });
       await client.addComponent({ containerSlotId: oInputSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueObjectInput<string>' });
       await client.addComponent({ containerSlotId: xInputSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueObjectInput<string>' });
-      // ObjectValueSource<string> - セル状態を読み書きするためのSource (IVariable<FrooxEngineContext, T>を実装)
+      // ObjectValueSource<string> - Source for reading/writing cell state (implements IVariable<FrooxEngineContext, T>)
       await client.addComponent({ containerSlotId: cellSourceSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ObjectValueSource<string>' });
-      // ValueSource<bool> - ターン状態を読み書きするためのSource (IVariable<FrooxEngineContext, T>を実装)
+      // ValueSource<bool> - Source for reading/writing turn state (implements IVariable<FrooxEngineContext, T>)
       await client.addComponent({ containerSlotId: turnSourceSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueSource<bool>' });
-      // FrooxEngineContext版のWrite系ノード（ObjectValueSource/ValueSourceと互換性のため）
+      // FrooxEngineContext version Write nodes (for compatibility with ObjectValueSource/ValueSource)
       await client.addComponent({ containerSlotId: writeSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectWrite<[FrooxEngine]FrooxEngine.ProtoFlux.FrooxEngineContext,string>' });
       await client.addComponent({ containerSlotId: turnWriteSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueWrite<[FrooxEngine]FrooxEngine.ProtoFlux.FrooxEngineContext,bool>' });
       await client.addComponent({ containerSlotId: notSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.NOT_Bool' });
-      // ゲーム終了チェック用
+      // For game over check
       await client.addComponent({ containerSlotId: gameOverSourceSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueSource<bool>' });
       await client.addComponent({ containerSlotId: notGameOverSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.NOT_Bool' });
       await client.addComponent({ containerSlotId: conditionAndSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.AND_Bool' });
-      // 勝敗チェック用Trigger
+      // Win check Trigger
       await client.addComponent({ containerSlotId: checkWinTriggerSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Actions.DynamicImpulseTrigger' });
-      // DynamicImpulseTrigger.Tag は INodeObjectOutput<string> を期待するので ValueObjectInput を使う
+      // DynamicImpulseTrigger.Tag expects INodeObjectOutput<string>, so use ValueObjectInput
       await client.addComponent({ containerSlotId: checkWinTagSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueObjectInput<string>' });
 
-      // 各コンポーネントを取得
+      // Get each component
       const getComp = async (slotId: string, typeIncludes: string) => {
         const data = await client.getSlot({ slotId, includeComponentData: true });
         return findComponent(data.data, typeIncludes);
@@ -747,7 +747,7 @@ async function main() {
       const checkWinTriggerComp = await getComp(checkWinTriggerSlotId, 'DynamicImpulseTrigger');
       const checkWinTagComp = await getComp(checkWinTagSlotId, 'ValueObjectInput');
 
-      // TagInput設定 & Receiver.Tag ← TagInput
+      // TagInput setup & Receiver.Tag <- TagInput
       if (tagInputComp?.id) {
         await client.updateComponent({ id: tagInputComp.id, members: { Value: { $type: 'string', value: `Cell_${i}` } } as any });
       }
@@ -758,7 +758,7 @@ async function main() {
         });
       }
 
-      // 値入力設定
+      // Value input setup
       if (oInputComp?.id) {
         await client.updateComponent({ id: oInputComp.id, members: { Value: { $type: 'string', value: '○' } } as any });
       }
@@ -766,11 +766,11 @@ async function main() {
         await client.updateComponent({ id: xInputComp.id, members: { Value: { $type: 'string', value: '×' } } as any });
       }
 
-      // ObjectValueSource/ValueSource のSource設定
-      // GlobalReferenceを手動で追加し、SourceとReferenceを設定する
-      // 重要: GlobalReference.ReferenceにはValueField.Value（IValue<T>を実装）を設定する
+      // ObjectValueSource/ValueSource Source setup
+      // Manually add GlobalReference and set Source and Reference
+      // Important: Set ValueField.Value (implements IValue<T>) to GlobalReference.Reference
       if (cellSourceComp?.id) {
-        // GlobalReference<IValue<string>>を追加
+        // Add GlobalReference<IValue<string>>
         await client.addComponent({
           containerSlotId: cellSourceSlotId,
           componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalReference<[FrooxEngine]FrooxEngine.IValue<string>>',
@@ -779,7 +779,7 @@ async function main() {
         const cellSourceSlotData = await client.getSlot({ slotId: cellSourceSlotId, includeComponentData: true });
         const globalRefComp = findComponent(cellSourceSlotData.data, 'GlobalReference');
 
-        // ValueField<string>.Value のIDを取得
+        // Get ValueField<string>.Value ID
         const cellFieldDetails = await client.getComponent(cellField.id);
         const cellValueId = cellFieldDetails.data?.members?.Value?.id;
 
@@ -797,7 +797,7 @@ async function main() {
         }
       }
       if (turnSourceComp?.id && isOTurnField?.id) {
-        // GlobalReference<IValue<bool>>を追加
+        // Add GlobalReference<IValue<bool>>
         await client.addComponent({
           containerSlotId: turnSourceSlotId,
           componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalReference<[FrooxEngine]FrooxEngine.IValue<bool>>',
@@ -806,7 +806,7 @@ async function main() {
         const turnSourceSlotData = await client.getSlot({ slotId: turnSourceSlotId, includeComponentData: true });
         const globalRefComp = findComponent(turnSourceSlotData.data, 'GlobalReference');
 
-        // ValueField<bool>.Value のIDを取得
+        // Get ValueField<bool>.Value ID
         const turnFieldDetails = await client.getComponent(isOTurnField.id);
         const turnValueId = turnFieldDetails.data?.members?.Value?.id;
 
@@ -824,7 +824,7 @@ async function main() {
         }
       }
 
-      // GameOverSource の設定（isGameOverFieldを参照）
+      // GameOverSource setup (referencing isGameOverField)
       if (gameOverSourceComp?.id && isGameOverField?.id) {
         await client.addComponent({
           containerSlotId: gameOverSourceSlotId,
@@ -849,7 +849,7 @@ async function main() {
         }
       }
 
-      // NotGameOver.A ← GameOverSource（ゲーム終了していない = NOT(isGameOver)）
+      // NotGameOver.A <- GameOverSource (game not over = NOT(isGameOver))
       if (notGameOverComp?.id && gameOverSourceComp?.id) {
         await client.updateComponent({
           id: notGameOverComp.id,
@@ -857,7 +857,7 @@ async function main() {
         });
       }
 
-      // ノード接続
+      // Node connections
       // Receiver.OnTriggered → If
       if (receiverComp?.id && ifComp?.id) {
         const receiverDetails = await client.getComponent(receiverComp.id);
@@ -868,7 +868,7 @@ async function main() {
         });
       }
 
-      // If.Condition ← ConditionAnd（セル空 AND ゲーム終了していない）
+      // If.Condition <- ConditionAnd (cell empty AND game not over)
       if (ifComp?.id && conditionAndComp?.id) {
         await client.updateComponent({
           id: ifComp.id,
@@ -876,7 +876,7 @@ async function main() {
         });
       }
 
-      // ConditionAnd.A ← Equals（セルが空か）, ConditionAnd.B ← NotGameOver（ゲーム終了していないか）
+      // ConditionAnd.A <- Equals (cell is empty), ConditionAnd.B <- NotGameOver (game not over)
       if (conditionAndComp?.id && equalsComp?.id && notGameOverComp?.id) {
         await client.updateComponent({
           id: conditionAndComp.id,
@@ -887,7 +887,7 @@ async function main() {
         });
       }
 
-      // Equals.A ← CellSource（セル値）, Equals.B は未接続（null比較）
+      // Equals.A <- CellSource (cell value), Equals.B is not connected (null comparison)
       if (equalsComp?.id && cellSourceComp?.id) {
         await client.updateComponent({
           id: equalsComp.id,
@@ -907,7 +907,7 @@ async function main() {
         });
       }
 
-      // Write.Variable ← CellSource (IVariableを実装), Write.Value ← Conditional
+      // Write.Variable <- CellSource (implements IVariable), Write.Value <- Conditional
       if (writeComp?.id && cellSourceComp?.id && conditionalComp?.id) {
         await client.updateComponent({
           id: writeComp.id,
@@ -918,7 +918,7 @@ async function main() {
         });
       }
 
-      // Conditional.Condition ← TurnSource (bool出力), Conditional.OnTrue ← OInput, Conditional.OnFalse ← XInput
+      // Conditional.Condition <- TurnSource (bool output), Conditional.OnTrue <- OInput, Conditional.OnFalse <- XInput
       if (conditionalComp?.id && turnSourceComp?.id && oInputComp?.id && xInputComp?.id) {
         await client.updateComponent({
           id: conditionalComp.id,
@@ -940,7 +940,7 @@ async function main() {
         });
       }
 
-      // TurnWrite.Variable ← TurnSource (IVariableを実装), TurnWrite.Value ← Not
+      // TurnWrite.Variable <- TurnSource (implements IVariable), TurnWrite.Value <- Not
       if (turnWriteComp?.id && turnSourceComp?.id && notComp?.id) {
         await client.updateComponent({
           id: turnWriteComp.id,
@@ -951,7 +951,7 @@ async function main() {
         });
       }
 
-      // Not.A ← TurnSource (bool出力)
+      // Not.A <- TurnSource (bool output)
       if (notComp?.id && turnSourceComp?.id) {
         await client.updateComponent({
           id: notComp.id,
@@ -959,7 +959,7 @@ async function main() {
         });
       }
 
-      // CheckWinTag設定（"CheckWin"タグ）
+      // CheckWinTag setup ("CheckWin" tag)
       if (checkWinTagComp?.id) {
         await client.updateComponent({
           id: checkWinTagComp.id,
@@ -967,7 +967,7 @@ async function main() {
         });
       }
 
-      // TargetHierarchy用のRefObjectInput<Slot>を追加
+      // Add RefObjectInput<Slot> for TargetHierarchy
       await client.addSlot({ parentId: cellLogicId, name: 'TargetSlot' });
       const targetSlotSlotId = await getChildSlotId(client, cellLogicId, 'TargetSlot');
       await client.addComponent({
@@ -978,7 +978,7 @@ async function main() {
       const targetSlotData = await client.getSlot({ slotId: targetSlotSlotId, includeComponentData: true });
       const targetSlotComp = findComponent(targetSlotData.data, 'RefObjectInput');
 
-      // TargetSlot に mainId を設定
+      // Set mainId to TargetSlot
       if (targetSlotComp?.id) {
         await client.updateComponent({
           id: targetSlotComp.id,
@@ -986,7 +986,7 @@ async function main() {
         });
       }
 
-      // CheckWinTrigger設定: Tag ← CheckWinTag, TargetHierarchy ← TargetSlot
+      // CheckWinTrigger setup: Tag <- CheckWinTag, TargetHierarchy <- TargetSlot
       if (checkWinTriggerComp?.id && checkWinTagComp?.id && targetSlotComp?.id) {
         await client.updateComponent({
           id: checkWinTriggerComp.id,
@@ -997,7 +997,7 @@ async function main() {
         });
       }
 
-      // TurnWrite.OnWritten → CheckWinTrigger（ターン更新後に勝敗チェック）
+      // TurnWrite.OnWritten -> CheckWinTrigger (check win after turn update)
       if (turnWriteComp?.id && checkWinTriggerComp?.id) {
         const turnWriteDetails = await client.getComponent(turnWriteComp.id);
         const onWrittenId = turnWriteDetails.data?.members?.OnWritten?.id;
@@ -1010,49 +1010,49 @@ async function main() {
       console.log(`  Cell_${i}: ProtoFlux nodes created and connected`);
     }
 
-    // ========== 勝敗判定ロジック ==========
+    // ========== Win determination logic ==========
     console.log('  Creating win check logic...');
     await client.addSlot({ parentId: fluxId, name: 'WinCheck', position: { x: 3, y: 0, z: 0 } });
     const winCheckId = await getChildSlotId(client, fluxId, 'WinCheck');
 
-    // 8ラインの定義: [セルA, セルB, セルC]
+    // 8 lines definition: [cellA, cellB, cellC]
     const lines = [
-      [0, 1, 2], // 横1行目
-      [3, 4, 5], // 横2行目
-      [6, 7, 8], // 横3行目
-      [0, 3, 6], // 縦1列目
-      [1, 4, 7], // 縦2列目
-      [2, 5, 8], // 縦3列目
-      [0, 4, 8], // 斜め左上→右下
-      [2, 4, 6], // 斜め右上→左下
+      [0, 1, 2], // row 1
+      [3, 4, 5], // row 2
+      [6, 7, 8], // row 3
+      [0, 3, 6], // column 1
+      [1, 4, 7], // column 2
+      [2, 5, 8], // column 3
+      [0, 4, 8], // diagonal top-left to bottom-right
+      [2, 4, 6], // diagonal top-right to bottom-left
     ];
 
-    // 勝敗判定用ノードを作成
+    // Create win determination nodes
     const winCheckNodes = [
-      'Receiver', 'TagInput',  // DynamicImpulse受信
-      'IfWinner', 'IfDraw',    // 勝者/引き分け判定分岐
-      'GameOverWrite', 'GameOverSource', // isGameOver書き込み用
-      'ResultWrite', 'ResultSource', // resultText書き込み用
-      'TrueInput',             // true定数
-      'OWinText', 'XWinText', 'DrawText', // 結果テキスト
-      'WinnerConditional',     // 勝者マーク選択
-      'DrawConditional',       // 引き分けテキスト選択
+      'Receiver', 'TagInput',  // DynamicImpulse receive
+      'IfWinner', 'IfDraw',    // winner/draw decision branches
+      'GameOverWrite', 'GameOverSource', // for writing isGameOver
+      'ResultWrite', 'ResultSource', // for writing resultText
+      'TrueInput',             // true constant
+      'OWinText', 'XWinText', 'DrawText', // result text
+      'WinnerConditional',     // winner mark selection
+      'DrawConditional',       // draw text selection
     ];
-    // 8ライン分のセルソースと比較ノード
+    // Cell sources and comparison nodes for 8 lines
     for (let l = 0; l < 8; l++) {
-      winCheckNodes.push(`L${l}_CellA`, `L${l}_CellB`, `L${l}_CellC`);  // 3セル読み取り
-      winCheckNodes.push(`L${l}_EqAB`, `L${l}_EqBC`, `L${l}_NotNull`);  // 比較ノード
+      winCheckNodes.push(`L${l}_CellA`, `L${l}_CellB`, `L${l}_CellC`);  // 3 cells read
+      winCheckNodes.push(`L${l}_EqAB`, `L${l}_EqBC`, `L${l}_NotNull`);  // comparison nodes
       winCheckNodes.push(`L${l}_And1`, `L${l}_And2`);                   // AND
     }
-    // 8ラインのOR（チェーン構造）
+    // 8 lines OR (chain structure)
     winCheckNodes.push('Or_01', 'Or_23', 'Or_45', 'Or_67', 'Or_0123', 'Or_4567', 'OrAll');
-    // 引き分け判定（9セルがnullでない）
+    // Draw determination (all 9 cells are not null)
     for (let c = 0; c < 9; c++) {
       winCheckNodes.push(`Draw_Cell${c}`, `Draw_NotNull${c}`);
     }
-    // 9セルのANDチェーン: And_01, And_012, ..., And_01234567, Draw_AndAll
+    // 9 cells AND chain: And_01, And_012, ..., And_01234567, Draw_AndAll
     winCheckNodes.push('Draw_And_01', 'Draw_And_012', 'Draw_And_0123', 'Draw_And_01234', 'Draw_And_012345', 'Draw_And_0123456', 'Draw_And_01234567', 'Draw_AndAll', 'Draw_NotWin', 'Draw_Final');
-    // 勝者マーク取得用
+    // For winner mark
     winCheckNodes.push('WinnerMark');
 
     for (const name of winCheckNodes) {
@@ -1062,7 +1062,7 @@ async function main() {
     const winCheckData = await client.getSlot({ slotId: winCheckId, depth: 1 });
     const getWinSlotId = (name: string) => winCheckData.data?.children?.find((c: any) => c.name?.value === name)?.id;
 
-    // 基本ノードのコンポーネント追加
+    // Add basic node components
     const receiverWinSlotId = getWinSlotId('Receiver');
     const tagInputWinSlotId = getWinSlotId('TagInput');
     const ifWinnerSlotId = getWinSlotId('IfWinner');
@@ -1093,7 +1093,7 @@ async function main() {
     await client.addComponent({ containerSlotId: winnerConditionalSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectConditional<string>' });
     await client.addComponent({ containerSlotId: winnerMarkSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ObjectValueSource<string>' });
 
-    // 8ライン分のノード追加
+    // Add nodes for 8 lines
     for (let l = 0; l < 8; l++) {
       await client.addComponent({ containerSlotId: getWinSlotId(`L${l}_CellA`), componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ObjectValueSource<string>' });
       await client.addComponent({ containerSlotId: getWinSlotId(`L${l}_CellB`), componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ObjectValueSource<string>' });
@@ -1105,7 +1105,7 @@ async function main() {
       await client.addComponent({ containerSlotId: getWinSlotId(`L${l}_And2`), componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.AND_Bool' });
     }
 
-    // ORノード追加（チェーン構造）
+    // Add OR nodes (chain structure)
     await client.addComponent({ containerSlotId: getWinSlotId('Or_01'), componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.OR_Bool' });
     await client.addComponent({ containerSlotId: getWinSlotId('Or_23'), componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.OR_Bool' });
     await client.addComponent({ containerSlotId: getWinSlotId('Or_45'), componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.OR_Bool' });
@@ -1114,12 +1114,12 @@ async function main() {
     await client.addComponent({ containerSlotId: getWinSlotId('Or_4567'), componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.OR_Bool' });
     await client.addComponent({ containerSlotId: getWinSlotId('OrAll'), componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.OR_Bool' });
 
-    // 引き分け判定用ノード追加
+    // Add draw determination nodes
     for (let c = 0; c < 9; c++) {
       await client.addComponent({ containerSlotId: getWinSlotId(`Draw_Cell${c}`), componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ObjectValueSource<string>' });
       await client.addComponent({ containerSlotId: getWinSlotId(`Draw_NotNull${c}`), componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectNotEquals<string>' });
     }
-    // ANDチェーン（9セル判定）
+    // AND chain (9 cell determination)
     await client.addComponent({ containerSlotId: getWinSlotId('Draw_And_01'), componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.AND_Bool' });
     await client.addComponent({ containerSlotId: getWinSlotId('Draw_And_012'), componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.AND_Bool' });
     await client.addComponent({ containerSlotId: getWinSlotId('Draw_And_0123'), componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.AND_Bool' });
@@ -1133,7 +1133,7 @@ async function main() {
 
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // コンポーネント取得用ヘルパー
+    // Component retrieval helper
     const getWinComp = async (name: string, typeIncludes: string) => {
       const slotId = getWinSlotId(name);
       if (!slotId) return null;
@@ -1141,7 +1141,7 @@ async function main() {
       return findComponent(data.data, typeIncludes);
     };
 
-    // 基本ノード設定
+    // Basic node settings
     const receiverWinComp = await getWinComp('Receiver', 'DynamicImpulseReceiver');
     const tagInputWinComp = await getWinComp('TagInput', 'GlobalValue');
     const ifWinnerComp = await getWinComp('IfWinner', 'If');
@@ -1164,7 +1164,7 @@ async function main() {
     const or_4567Comp = await getWinComp('Or_4567', 'OR_Bool');
     const orAllComp = await getWinComp('OrAll', 'OR_Bool');
 
-    // タグ設定
+    // Tag settings
     if (tagInputWinComp?.id) {
       await client.updateComponent({ id: tagInputWinComp.id, members: { Value: { $type: 'string', value: 'CheckWin' } } as any });
     }
@@ -1175,21 +1175,21 @@ async function main() {
       });
     }
 
-    // 値設定
+    // Value settings
     if (trueInputWinComp?.id) {
       await client.updateComponent({ id: trueInputWinComp.id, members: { Value: { $type: 'bool', value: true } } as any });
     }
     if (oWinTextComp?.id) {
-      await client.updateComponent({ id: oWinTextComp.id, members: { Value: { $type: 'string', value: '○の勝ち!' } } as any });
+      await client.updateComponent({ id: oWinTextComp.id, members: { Value: { $type: 'string', value: 'O Wins!' } } as any });
     }
     if (xWinTextComp?.id) {
-      await client.updateComponent({ id: xWinTextComp.id, members: { Value: { $type: 'string', value: '×の勝ち!' } } as any });
+      await client.updateComponent({ id: xWinTextComp.id, members: { Value: { $type: 'string', value: 'X Wins!' } } as any });
     }
     if (drawTextComp?.id) {
-      await client.updateComponent({ id: drawTextComp.id, members: { Value: { $type: 'string', value: '引き分け!' } } as any });
+      await client.updateComponent({ id: drawTextComp.id, members: { Value: { $type: 'string', value: 'Draw!' } } as any });
     }
 
-    // GameOverSource/ResultSource の GlobalReference設定
+    // GameOverSource/ResultSource GlobalReference settings
     if (gameOverSourceComp2?.id && isGameOverField?.id) {
       await client.addComponent({
         containerSlotId: gameOverSourceSlotId2,
@@ -1222,12 +1222,12 @@ async function main() {
       }
     }
 
-    // 8ライン分のセルソース設定と比較接続
+    // Cell source settings and comparison connections for 8 lines
     const lineResults: any[] = [];
     for (let l = 0; l < 8; l++) {
       const [a, b, c] = lines[l];
 
-      // CellA/B/C の Source設定
+      // CellA/B/C Source settings
       for (const [suffix, cellIdx] of [['CellA', a], ['CellB', b], ['CellC', c]] as const) {
         const cellSourceComp = await getWinComp(`L${l}_${suffix}`, 'ObjectValueSource');
         const cellField = cellFields[cellIdx];
@@ -1274,7 +1274,7 @@ async function main() {
         });
       }
 
-      // NotNull: A != null（Bを未接続でnull比較）
+      // NotNull: A != null (not connecting B makes it null comparison)
       if (notNullComp?.id && cellAComp?.id) {
         await client.updateComponent({
           id: notNullComp.id,
@@ -1290,7 +1290,7 @@ async function main() {
         });
       }
 
-      // And2: And1 AND NotNull （3つ同じ AND nullでない）
+      // And2: And1 AND NotNull (all 3 same AND not null)
       if (and2Comp?.id && and1Comp?.id && notNullComp?.id) {
         await client.updateComponent({
           id: and2Comp.id,
@@ -1301,7 +1301,7 @@ async function main() {
       lineResults.push(and2Comp);
     }
 
-    // ORチェーン: 8ラインを2つずつOR → 4つを2つずつOR → 最終OR
+    // OR chain: OR 8 lines in pairs -> OR 4 in pairs -> final OR
     // Or_01: line0 OR line1
     if (or_01Comp?.id && lineResults[0]?.id && lineResults[1]?.id) {
       await client.updateComponent({
@@ -1352,7 +1352,7 @@ async function main() {
       });
     }
 
-    // 引き分け判定用のセルソース設定
+    // Draw determination cell source settings
     const drawNotNullComps: any[] = [];
     for (let c = 0; c < 9; c++) {
       const cellSourceComp = await getWinComp(`Draw_Cell${c}`, 'ObjectValueSource');
@@ -1384,7 +1384,7 @@ async function main() {
       drawNotNullComps.push(notNullComp);
     }
 
-    // ANDチェーン: 9セルすべてがnullでないかチェック
+    // AND chain: Check if all 9 cells are not null
     // Draw_And_01: NotNull0 AND NotNull1
     const drawAnd_01Comp = await getWinComp('Draw_And_01', 'AND_Bool');
     if (drawAnd_01Comp?.id && drawNotNullComps[0]?.id && drawNotNullComps[1]?.id) {
@@ -1450,7 +1450,7 @@ async function main() {
       });
     }
 
-    // Draw_NotWin: NOT(勝者あり)
+    // Draw_NotWin: NOT(there is a winner)
     const drawNotWinComp = await getWinComp('Draw_NotWin', 'NOT_Bool');
     if (drawNotWinComp?.id && orAllComp?.id) {
       await client.updateComponent({
@@ -1459,7 +1459,7 @@ async function main() {
       });
     }
 
-    // Draw_Final: 全セル埋まっている AND 勝者なし
+    // Draw_Final: all cells filled AND no winner
     const drawFinalComp = await getWinComp('Draw_Final', 'AND_Bool');
     if (drawFinalComp?.id && drawAndAllComp?.id && drawNotWinComp?.id) {
       await client.updateComponent({
@@ -1468,14 +1468,14 @@ async function main() {
       });
     }
 
-    // WinnerMark: 勝利ライン0のCellAを使用（最初のライン）
-    // 注意: どのラインで勝ったかを判定するのは複雑なので、簡略化してTurnSourceを使う
-    // 勝者は直前のターンのプレイヤーなので、現在のターンの逆
-    // TurnSource = isOTurn なので、勝者は NOT(isOTurn) ? "○" : "×"
-    // しかし、勝敗判定時点ではターンが既に切り替わっているため、isOTurn ? "×" : "○" となる
+    // WinnerMark: Use CellA of winning line 0 (first line)
+    // Note: Determining which line won is complex, so we simplify using TurnSource
+    // The winner is the previous turn's player, so the opposite of current turn
+    // TurnSource = isOTurn, so winner is NOT(isOTurn) ? "O" : "X"
+    // However, at win determination time turn has already switched, so isOTurn ? "X" : "O"
 
-    // WinnerConditional設定: isOTurn ? "×の勝ち" : "○の勝ち"
-    // 勝者マーク取得用のValueSource<bool>を追加
+    // WinnerConditional settings: isOTurn ? "X Wins" : "O Wins"
+    // Add ValueSource<bool> for winner mark
     await client.addSlot({ parentId: winCheckId, name: 'WinnerTurnSource' });
     const winnerTurnSourceSlotId = await getChildSlotId(client, winCheckId, 'WinnerTurnSource');
     await client.addComponent({ containerSlotId: winnerTurnSourceSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueSource<bool>' });
@@ -1500,20 +1500,20 @@ async function main() {
       }
     }
 
-    // WinnerConditional: isOTurn(現在) ? "×の勝ち" : "○の勝ち"
-    // 勝敗判定時点ではターンが切り替わっているので、isOTurn=trueなら×が勝ち
+    // WinnerConditional: isOTurn(current) ? "X Wins" : "O Wins"
+    // At win determination time turn has switched, so if isOTurn=true then X wins
     if (winnerConditionalComp?.id && winnerTurnSourceComp?.id && xWinTextComp?.id && oWinTextComp?.id) {
       await client.updateComponent({
         id: winnerConditionalComp.id,
         members: {
           Condition: { $type: 'reference', targetId: winnerTurnSourceComp.id },
-          OnTrue: { $type: 'reference', targetId: xWinTextComp.id },  // isOTurn=true → ×の勝ち
-          OnFalse: { $type: 'reference', targetId: oWinTextComp.id }, // isOTurn=false → ○の勝ち
+          OnTrue: { $type: 'reference', targetId: xWinTextComp.id },  // isOTurn=true -> X wins
+          OnFalse: { $type: 'reference', targetId: oWinTextComp.id }, // isOTurn=false -> O wins
         } as any,
       });
     }
 
-    // 実行フロー接続
+    // Execution flow connections
     // Receiver.OnTriggered → IfWinner
     if (receiverWinComp?.id && ifWinnerComp?.id) {
       const details = await client.getComponent(receiverWinComp.id);
@@ -1524,7 +1524,7 @@ async function main() {
       });
     }
 
-    // IfWinner.Condition ← OrAll（勝者がいるか）
+    // IfWinner.Condition <- OrAll (is there a winner)
     if (ifWinnerComp?.id && orAllComp?.id) {
       await client.updateComponent({
         id: ifWinnerComp.id,
@@ -1532,7 +1532,7 @@ async function main() {
       });
     }
 
-    // IfWinner.OnTrue → GameOverWrite（勝者あり）
+    // IfWinner.OnTrue -> GameOverWrite (winner exists)
     if (ifWinnerComp?.id && gameOverWriteComp?.id) {
       const details = await client.getComponent(ifWinnerComp.id);
       const onTrueId = details.data?.members?.OnTrue?.id;
@@ -1542,7 +1542,7 @@ async function main() {
       });
     }
 
-    // IfWinner.OnFalse → IfDraw（勝者なし → 引き分けチェック）
+    // IfWinner.OnFalse -> IfDraw (no winner -> check draw)
     if (ifWinnerComp?.id && ifDrawComp?.id) {
       const details = await client.getComponent(ifWinnerComp.id);
       const onFalseId = details.data?.members?.OnFalse?.id;
@@ -1552,7 +1552,7 @@ async function main() {
       });
     }
 
-    // GameOverWrite設定
+    // GameOverWrite settings
     if (gameOverWriteComp?.id && gameOverSourceComp2?.id && trueInputWinComp?.id) {
       await client.updateComponent({
         id: gameOverWriteComp.id,
@@ -1573,7 +1573,7 @@ async function main() {
       });
     }
 
-    // ResultWrite設定（勝者テキスト）
+    // ResultWrite settings (winner text)
     if (resultWriteComp?.id && resultSourceComp?.id && winnerConditionalComp?.id) {
       await client.updateComponent({
         id: resultWriteComp.id,
@@ -1584,7 +1584,7 @@ async function main() {
       });
     }
 
-    // IfDraw.Condition ← Draw_Final（引き分けか）
+    // IfDraw.Condition <- Draw_Final (is it a draw)
     if (ifDrawComp?.id && drawFinalComp?.id) {
       await client.updateComponent({
         id: ifDrawComp.id,
@@ -1592,8 +1592,8 @@ async function main() {
       });
     }
 
-    // IfDraw.OnTrue → 引き分け用GameOverWrite
-    // 引き分け用のGameOverWriteとResultWriteを追加
+    // IfDraw.OnTrue -> Draw GameOverWrite
+    // Add GameOverWrite and ResultWrite for draw
     await client.addSlot({ parentId: winCheckId, name: 'DrawGameOverWrite' });
     await client.addSlot({ parentId: winCheckId, name: 'DrawResultWrite' });
     const drawGameOverWriteSlotId = await getChildSlotId(client, winCheckId, 'DrawGameOverWrite');
@@ -1618,7 +1618,7 @@ async function main() {
       });
     }
 
-    // DrawGameOverWrite設定
+    // DrawGameOverWrite settings
     if (drawGameOverWriteComp?.id && gameOverSourceComp2?.id && trueInputWinComp?.id) {
       await client.updateComponent({
         id: drawGameOverWriteComp.id,
@@ -1639,7 +1639,7 @@ async function main() {
       });
     }
 
-    // DrawResultWrite設定（引き分けテキスト）
+    // DrawResultWrite settings (draw text)
     if (drawResultWriteComp?.id && resultSourceComp?.id && drawTextComp?.id) {
       await client.updateComponent({
         id: drawResultWriteComp.id,
@@ -1652,14 +1652,14 @@ async function main() {
 
     console.log('  Win check logic created');
 
-    // リセット用ロジック
+    // Reset logic
     await client.addSlot({ parentId: fluxId, name: 'Reset', position: { x: 5, y: 0, z: 0 } });
     const resetId = await getChildSlotId(client, fluxId, 'Reset');
 
-    // リセット用ノード作成
-    // EmptyStrは不要 - ObjectWrite.Valueを接続しないことでnullが書き込まれる
+    // Create reset nodes
+    // EmptyStr not needed - not connecting ObjectWrite.Value writes null
     const resetNodeNames = ['Receiver', 'TagInput', 'TrueInput', 'FalseInput'];
-    // 9個のセルクリア用 + 1個のターンリセット用 + isGameOver/resultTextリセット用
+    // 9 cells clear + 1 turn reset + isGameOver/resultText reset
     for (let i = 0; i < 9; i++) {
       resetNodeNames.push(`CellSource_${i}`, `CellWrite_${i}`);
     }
@@ -1682,21 +1682,21 @@ async function main() {
     const resetResultSourceSlotId = getResetSlotId('ResultSource');
     const resetResultWriteSlotId = getResetSlotId('ResultWrite');
 
-    // 基本コンポーネント追加
+    // Add basic components
     await client.addComponent({ containerSlotId: resetReceiverSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Actions.DynamicImpulseReceiver' });
     await client.addComponent({ containerSlotId: resetTagInputSlotId, componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalValue<string>' });
     await client.addComponent({ containerSlotId: resetTrueInputSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueInput<bool>' });
     await client.addComponent({ containerSlotId: resetFalseInputSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueInput<bool>' });
-    // GameOver用のSource + Write
+    // GameOver Source + Write
     await client.addComponent({ containerSlotId: resetGameOverSourceSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueSource<bool>' });
     await client.addComponent({ containerSlotId: resetGameOverSourceSlotId, componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalReference<[FrooxEngine]FrooxEngine.IValue<bool>>' });
     await client.addComponent({ containerSlotId: resetGameOverWriteSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueWrite<[FrooxEngine]FrooxEngine.ProtoFlux.FrooxEngineContext,bool>' });
-    // ResultText用のSource + Write
+    // ResultText Source + Write
     await client.addComponent({ containerSlotId: resetResultSourceSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ObjectValueSource<string>' });
     await client.addComponent({ containerSlotId: resetResultSourceSlotId, componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalReference<[FrooxEngine]FrooxEngine.IValue<string>>' });
     await client.addComponent({ containerSlotId: resetResultWriteSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectWrite<[FrooxEngine]FrooxEngine.ProtoFlux.FrooxEngineContext,string>' });
 
-    // 各セル用のSource + Writeを追加
+    // Add Source + Write for each cell
     const cellWriteComps: any[] = [];
     for (let i = 0; i < 9; i++) {
       const cellSourceSlotId = getResetSlotId(`CellSource_${i}`);
@@ -1710,14 +1710,14 @@ async function main() {
 
       await new Promise(resolve => setTimeout(resolve, 30));
 
-      // コンポーネント取得
+      // Get components
       const cellSourceData = await client.getSlot({ slotId: cellSourceSlotId, includeComponentData: true });
       const cellSourceComp = findComponent(cellSourceData.data, 'ObjectValueSource');
       const cellGlobalRefComp = findComponent(cellSourceData.data, 'GlobalReference');
       const cellWriteData = await client.getSlot({ slotId: cellWriteSlotId, includeComponentData: true });
       const cellWriteComp = findComponent(cellWriteData.data, 'ObjectWrite');
 
-      // cellFields[i]のValue IDを取得
+      // Get cellFields[i] Value ID
       if (cellFields[i]?.id) {
         const cellFieldDetails = await client.getComponent(cellFields[i].id);
         const cellValueId = cellFieldDetails.data?.members?.Value?.id;
@@ -1739,7 +1739,7 @@ async function main() {
       cellWriteComps.push({ sourceComp: cellSourceComp, writeComp: cellWriteComp });
     }
 
-    // ターン用のSource + Write
+    // Turn Source + Write
     const resetTurnSourceSlotId = getResetSlotId('TurnSource');
     const resetTurnWriteSlotId = getResetSlotId('TurnWrite');
 
@@ -1773,7 +1773,7 @@ async function main() {
       }
     }
 
-    // 基本コンポーネント取得
+    // Get basic components
     const resetReceiverData2 = await client.getSlot({ slotId: resetReceiverSlotId, includeComponentData: true });
     const resetReceiverComp = findComponent(resetReceiverData2.data, 'DynamicImpulseReceiver');
     const resetTagInputData = await client.getSlot({ slotId: resetTagInputSlotId, includeComponentData: true });
@@ -1781,7 +1781,7 @@ async function main() {
     const resetTrueInputData = await client.getSlot({ slotId: resetTrueInputSlotId, includeComponentData: true });
     const resetTrueInputComp = findComponent(resetTrueInputData.data, 'ValueInput');
 
-    // 値設定
+    // Value settings
     if (resetTagInputComp?.id) {
       await client.updateComponent({
         id: resetTagInputComp.id,
@@ -1795,7 +1795,7 @@ async function main() {
       });
     }
 
-    // Receiver.Tag接続
+    // Receiver.Tag connection
     if (resetReceiverComp?.id && resetTagInputComp?.id) {
       await client.updateComponent({
         id: resetReceiverComp.id,
@@ -1803,25 +1803,25 @@ async function main() {
       });
     }
 
-    // 実行フロー接続: Receiver → CellWrite_0 → CellWrite_1 → ... → CellWrite_8 → TurnWrite
-    // 各CellWriteのVariable/Value接続 + OnWritten接続
+    // Execution flow connections: Receiver → CellWrite_0 → CellWrite_1 → ... → CellWrite_8 → TurnWrite
+    // Connect Variable/Value for each CellWrite + OnWritten connection
     let prevWriteComp = null;
     for (let i = 0; i < 9; i++) {
       const { sourceComp, writeComp } = cellWriteComps[i];
       if (!writeComp?.id) continue;
 
-      // Variable ← Source, Value は接続しない（nullが書き込まれる）
+      // Variable <- Source, Value is not connected (null is written)
       if (sourceComp?.id) {
         await client.updateComponent({
           id: writeComp.id,
           members: {
             Variable: { $type: 'reference', targetId: sourceComp.id },
-            // Value は未接続（null）
+            // Value is not connected (null)
           } as any,
         });
       }
 
-      // 前のノードからの接続
+      // Connection from previous node
       if (i === 0 && resetReceiverComp?.id) {
         // Receiver.OnTriggered → CellWrite_0
         const receiverDetails = await client.getComponent(resetReceiverComp.id);
@@ -1843,7 +1843,7 @@ async function main() {
       prevWriteComp = writeComp;
     }
 
-    // 最後のCellWrite → TurnWrite
+    // Last CellWrite -> TurnWrite
     if (prevWriteComp?.id && resetTurnWriteComp?.id) {
       const prevDetails = await client.getComponent(prevWriteComp.id);
       const onWrittenId = prevDetails.data?.members?.OnWritten?.id;
@@ -1864,7 +1864,7 @@ async function main() {
       });
     }
 
-    // FalseInput/GameOver/Result のコンポーネント取得と設定
+    // FalseInput/GameOver/Result component retrieval and settings
     await new Promise(resolve => setTimeout(resolve, 50));
 
     const resetFalseInputData = await client.getSlot({ slotId: resetFalseInputSlotId, includeComponentData: true });
@@ -1880,7 +1880,7 @@ async function main() {
     const resetResultWriteData = await client.getSlot({ slotId: resetResultWriteSlotId, includeComponentData: true });
     const resetResultWriteComp = findComponent(resetResultWriteData.data, 'ObjectWrite');
 
-    // FalseInput の値設定
+    // FalseInput value settings
     if (resetFalseInputComp?.id) {
       await client.updateComponent({
         id: resetFalseInputComp.id,
@@ -1888,7 +1888,7 @@ async function main() {
       });
     }
 
-    // GameOverSource の GlobalReference 設定
+    // GameOverSource GlobalReference settings
     if (resetGameOverGlobalRefComp?.id && isGameOverField?.id) {
       const fieldDetails = await client.getComponent(isGameOverField.id);
       const valueId = fieldDetails.data?.members?.Value?.id;
@@ -1906,7 +1906,7 @@ async function main() {
       }
     }
 
-    // ResultSource の GlobalReference 設定
+    // ResultSource GlobalReference settings
     if (resetResultGlobalRefComp?.id && resultTextField?.id) {
       const fieldDetails = await client.getComponent(resultTextField.id);
       const valueId = fieldDetails.data?.members?.Value?.id;
@@ -1955,13 +1955,13 @@ async function main() {
       });
     }
 
-    // ResultWrite: Variable ← ResultSource, Value は未接続（null）
+    // ResultWrite: Variable <- ResultSource, Value is not connected (null)
     if (resetResultWriteComp?.id && resetResultSourceComp?.id) {
       await client.updateComponent({
         id: resetResultWriteComp.id,
         members: {
           Variable: { $type: 'reference', targetId: resetResultSourceComp.id },
-          // Value は未接続（nullを書き込む）
+          // Value is not connected (writes null)
         } as any,
       });
     }
@@ -1969,20 +1969,20 @@ async function main() {
     console.log('  Reset logic created and connected (includes GameOver/Result reset)');
     console.log('  ProtoFlux logic created and connected');
 
-    // ========== 完了 ==========
+    // ========== Complete ==========
     console.log('\n========================================');
     console.log('=== Tic-Tac-Toe Game Created! ===');
     console.log('========================================');
     console.log(`\nLocation: ${slotName}`);
-    console.log('\n【機能】');
-    console.log('- セルクリック: ○/×を交互に配置');
-    console.log('- 空セルチェック: 既にマークがあるセルはクリック無効');
-    console.log('- ゲームオーバーチェック: 勝敗確定後はクリック無効');
-    console.log('- ターン表示: 現在の手番を表示');
-    console.log('- 勝敗判定: 8ライン（横3、縦3、斜め2）をチェック');
-    console.log('- 引き分け判定: 全セルが埋まり勝者なしの場合');
-    console.log('- 結果表示: 勝者または引き分けを表示');
-    console.log('- リセットボタン: 全セルクリア + ゲーム状態を初期化');
+    console.log('\n[Features]');
+    console.log('- Cell click: Place O/X alternately');
+    console.log('- Empty cell check: Cannot click cells that already have marks');
+    console.log('- Game over check: Cannot click after win/lose is determined');
+    console.log('- Turn display: Shows current turn');
+    console.log('- Win determination: Check 8 lines (3 rows, 3 columns, 2 diagonals)');
+    console.log('- Draw determination: When all cells filled with no winner');
+    console.log('- Result display: Shows winner or draw');
+    console.log('- Reset button: Clear all cells + initialize game state');
 
   } finally {
     client.disconnect();

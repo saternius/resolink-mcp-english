@@ -1,10 +1,10 @@
 /**
- * 押されたら原点から逃げる機能を追加するスクリプト
+ * Script to add escape-from-origin behavior when pressed
  *
- * GlobalTransform の出力メンバー（empty型）を使用したサンプル
- * ResoniteLinkの更新により、ProtoFluxノードの出力が $type: "empty" として返されるようになった
+ * Sample using GlobalTransform output members (empty type)
+ * With ResoniteLink update, ProtoFlux node outputs are now returned as $type: "empty"
  *
- * フロー:
+ * Flow:
  * ButtonEvents → SetGlobalPosition
  *                ↑
  *   GlobalTransform.GlobalPosition + Normalize(GlobalPosition - Origin) * Distance
@@ -20,12 +20,12 @@ async function main() {
   try {
     console.log('Adding escape behavior with output member references...\n');
 
-    // 1. RainbowBox を検索
+    // 1. Search for RainbowBox
     const box = await client.findSlotByName('RainbowBox', 'Root', 3);
     if (!box?.id) throw new Error('RainbowBox not found');
     console.log(`  Found RainbowBox: ${box.id}`);
 
-    // 2. ProtoFlux 用スロットを作成
+    // 2. Create slot for ProtoFlux
     const fluxName = `EscapeFlux_${Date.now()}`;
     await client.addSlot({
       parentId: box.id,
@@ -38,16 +38,16 @@ async function main() {
     if (!fluxContainer?.id) throw new Error('Failed to create flux container');
     console.log(`  Created flux container: ${fluxContainer.id}`);
 
-    // 3. 子スロットを作成（各ノード用）
+    // 3. Create child slots (for each node)
     const nodeSlots = [
       { name: 'BoxRef', x: -0.9, y: 0.15 },         // RefObjectInput<Slot>
-      { name: 'BoxTransform', x: -0.6, y: 0 },     // GlobalTransform（複数出力）
+      { name: 'BoxTransform', x: -0.6, y: 0 },     // GlobalTransform (multiple outputs)
       { name: 'Origin', x: -0.6, y: -0.2 },        // ValueInput<float3>
-      { name: 'Sub', x: -0.3, y: 0 },              // 箱位置 - 原点
-      { name: 'Normalize', x: 0, y: 0 },           // 正規化
-      { name: 'Distance', x: 0, y: -0.2 },         // 逃げる距離
-      { name: 'Mul', x: 0.3, y: 0 },               // 方向 * 距離
-      { name: 'Add', x: 0.6, y: 0 },               // 現在位置 + 移動量
+      { name: 'Sub', x: -0.3, y: 0 },              // box position - origin
+      { name: 'Normalize', x: 0, y: 0 },           // normalize
+      { name: 'Distance', x: 0, y: -0.2 },         // escape distance
+      { name: 'Mul', x: 0.3, y: 0 },               // direction * distance
+      { name: 'Add', x: 0.6, y: 0 },               // current position + movement
       { name: 'SetPos', x: 0.9, y: 0 },            // SetGlobalPosition
       { name: 'OnButton', x: -0.9, y: -0.1 },      // ButtonEvents
     ];
@@ -62,7 +62,7 @@ async function main() {
     }
     console.log('  Created node slots');
 
-    // 子スロットIDを取得
+    // Get child slot IDs
     const containerData = await client.getSlot({ slotId: fluxContainer.id, depth: 1, includeComponentData: false });
     const children = containerData.data?.children || [];
 
@@ -72,7 +72,7 @@ async function main() {
       return slot.id;
     };
 
-    // 4. ProtoFlux コンポーネントを追加
+    // 4. Add ProtoFlux components
     console.log('  Adding ProtoFlux components...');
 
     const boxRefSlotId = getSlotId('BoxRef');
@@ -86,7 +86,7 @@ async function main() {
     const setPosSlotId = getSlotId('SetPos');
     const onButtonSlotId = getSlotId('OnButton');
 
-    // コンポーネント追加
+    // Add components
     await client.addComponent({
       containerSlotId: boxRefSlotId,
       componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.RefObjectInput<[FrooxEngine]FrooxEngine.Slot>',
@@ -139,7 +139,7 @@ async function main() {
 
     console.log('  Added all ProtoFlux components');
 
-    // 5. コンポーネントIDを取得
+    // 5. Get component IDs
     const [
       boxRefData,
       boxTransformData,
@@ -181,17 +181,17 @@ async function main() {
       throw new Error('Failed to find all components');
     }
 
-    // ★ 重要: GlobalTransform の出力メンバーIDを取得（empty型）
+    // IMPORTANT: Get GlobalTransform output member ID (empty type)
     const globalPositionId = (boxTransformComp.members as any)?.GlobalPosition?.id;
     if (!globalPositionId) {
       throw new Error('GlobalPosition output not found - ResoniteLink may need update');
     }
     console.log(`  GlobalTransform.GlobalPosition output ID: ${globalPositionId}`);
 
-    // 6. 値を設定
+    // 6. Set values
     console.log('  Setting values...');
 
-    // BoxRef に RainbowBox を設定
+    // Set RainbowBox to BoxRef
     await client.updateComponent({
       id: boxRefComp.id,
       members: { Target: { $type: 'reference', targetId: box.id } } as any,
@@ -203,13 +203,13 @@ async function main() {
       members: { Value: { $type: 'float3', value: { x: 0, y: 0, z: 0 } } } as any,
     });
 
-    // 逃げる距離 = 0.5m
+    // Escape distance = 0.5m
     await client.updateComponent({
       id: distanceComp.id,
       members: { Value: { $type: 'float', value: 0.5 } } as any,
     });
 
-    // 7. 接続を設定
+    // 7. Set connections
     console.log('  Connecting nodes...');
 
     // GlobalTransform.Instance ← BoxRef
@@ -218,12 +218,12 @@ async function main() {
       members: { Instance: { $type: 'reference', targetId: boxRefComp.id } } as any,
     });
 
-    // ★ Sub.A ← GlobalTransform.GlobalPosition（出力IDを直接参照！）
-    // ★ Sub.B ← Origin
+    // Sub.A ← GlobalTransform.GlobalPosition (directly reference output ID!)
+    // Sub.B ← Origin
     await client.updateComponent({
       id: subComp.id,
       members: {
-        A: { $type: 'reference', targetId: globalPositionId },  // 出力IDを参照
+        A: { $type: 'reference', targetId: globalPositionId },  // Reference output ID
         B: { $type: 'reference', targetId: originComp.id },
       } as any,
     });
@@ -244,12 +244,12 @@ async function main() {
       } as any,
     });
 
-    // ★ Add.A ← GlobalTransform.GlobalPosition（出力IDを直接参照！）
-    // ★ Add.B ← Mul
+    // Add.A ← GlobalTransform.GlobalPosition (directly reference output ID!)
+    // Add.B ← Mul
     await client.updateComponent({
       id: addComp.id,
       members: {
-        A: { $type: 'reference', targetId: globalPositionId },  // 出力IDを参照
+        A: { $type: 'reference', targetId: globalPositionId },  // Reference output ID
         B: { $type: 'reference', targetId: mulComp.id },
       } as any,
     });

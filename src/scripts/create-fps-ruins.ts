@@ -58,7 +58,7 @@ async function createBox(
     } as any
   });
 
-  // BoxColliderのCharacterColliderを有効化
+  // Enable BoxCollider's CharacterCollider
   const collider = slotData.data.components.find(c => c.componentType === 'FrooxEngine.BoxCollider');
   if (collider?.id) {
     await client.updateComponent({
@@ -72,9 +72,9 @@ async function createBox(
   return slotId;
 }
 
-// === 建物A: 廃ビル (北西) ===
+// === Building A: Ruined Office (Northwest) ===
 async function createBuildingA(client: ResoniteLinkClient, parentId: string): Promise<void> {
-  console.log('  建物A: 廃ビルを作成中...');
+  console.log('  Building A: Creating ruined office...');
 
   const pos = { x: -15, y: 0, z: -15 };
   const W = 10, D = 8, H = 4, T = 0.25;
@@ -84,54 +84,54 @@ async function createBuildingA(client: ResoniteLinkClient, parentId: string): Pr
   if (!building?.id) return;
   const bId = building.id;
 
-  // 1F 床
+  // 1F floor
   await createBox(client, bId, 'Floor1F', { x: 0, y: 0.1, z: 0 }, { x: W, y: 0.2, z: D }, CONCRETE_DIRTY, 0.15);
 
-  // 1F 壁 (入口は南面)
+  // 1F walls (entrance on south side)
   await createBox(client, bId, 'Wall1F_N', { x: 0, y: H/2, z: -D/2 }, { x: W, y: H, z: T }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall1F_E', { x: W/2, y: H/2, z: 0 }, { x: T, y: H, z: D }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall1F_W', { x: -W/2, y: H/2, z: 0 }, { x: T, y: H, z: D }, CONCRETE, 0.2);
-  // 南壁 (入口用の穴を残す - 左右に分割)
+  // South wall (leaving a gap for entrance - split left and right)
   await createBox(client, bId, 'Wall1F_S_L', { x: -3, y: H/2, z: D/2 }, { x: 4, y: H, z: T }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall1F_S_R', { x: 3, y: H/2, z: D/2 }, { x: 4, y: H, z: T }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall1F_S_Top', { x: 0, y: 3.5, z: D/2 }, { x: 2, y: 1, z: T }, CONCRETE, 0.2);
 
-  // 1F 窓枠 (ガラスなし)
+  // 1F window frames (no glass)
   await createBox(client, bId, 'Window1F_E', { x: W/2 + 0.05, y: 2, z: 0 }, { x: 0.1, y: 1.5, z: 2 }, CONCRETE_DIRTY, 0.15);
   await createBox(client, bId, 'Window1F_W', { x: -W/2 - 0.05, y: 2, z: 0 }, { x: 0.1, y: 1.5, z: 2 }, CONCRETE_DIRTY, 0.15);
 
-  // 1F 瓦礫
+  // 1F rubble
   await createBox(client, bId, 'Rubble1F_1', { x: -2, y: 0.3, z: -1 }, { x: 1.5, y: 0.6, z: 1.2 }, RUBBLE, 0.1);
   await createBox(client, bId, 'Rubble1F_2', { x: 2, y: 0.25, z: 2 }, { x: 1, y: 0.5, z: 0.8 }, RUBBLE, 0.1);
 
-  // 2F 床 (穴あり - 3分割)
+  // 2F floor (with holes - split into 3 parts)
   await createBox(client, bId, 'Floor2F_N', { x: 0, y: H + 0.1, z: -2 }, { x: W - 0.5, y: 0.2, z: 4 }, CONCRETE_DIRTY, 0.15);
   await createBox(client, bId, 'Floor2F_S', { x: 0, y: H + 0.1, z: 3 }, { x: W - 0.5, y: 0.2, z: 2 }, CONCRETE_DIRTY, 0.15);
-  // 中央に穴
+  // Hole in center
 
-  // 2F 壁 (一部崩落)
+  // 2F walls (partially collapsed)
   await createBox(client, bId, 'Wall2F_N', { x: 0, y: H + H/2, z: -D/2 }, { x: W, y: H, z: T }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall2F_E_Lower', { x: W/2, y: H + 1.5, z: 0 }, { x: T, y: 3, z: D }, CONCRETE, 0.2);
-  // 西壁は崩落部分あり
+  // West wall has collapsed section
   await createBox(client, bId, 'Wall2F_W', { x: -W/2, y: H + H/2, z: -1 }, { x: T, y: H, z: D - 2 }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall2F_S', { x: 0, y: H + H/2, z: D/2 }, { x: W, y: H, z: T }, CONCRETE, 0.2);
 
-  // 内部階段 (北東角)
+  // Internal stairs (northeast corner)
   for (let i = 0; i < 8; i++) {
     await createBox(client, bId, `Stair_${i}`, { x: 3.5, y: 0.3 + i * 0.5, z: -2.5 + i * 0.4 }, { x: 1.5, y: 0.3, z: 0.6 }, CONCRETE_DIRTY, 0.15);
   }
 
-  // 鉄骨露出
+  // Exposed steel beams
   await createBox(client, bId, 'Beam_1', { x: -4, y: 6, z: 2 }, { x: 0.15, y: 3, z: 0.15 }, RUST, 0.3, 0.5);
   await createBox(client, bId, 'Beam_2', { x: -4, y: 7.5, z: 2 }, { x: 2, y: 0.15, z: 0.15 }, RUST, 0.3, 0.5);
 
-  // 屋上 (一部のみ)
+  // Rooftop (partial only)
   await createBox(client, bId, 'Roof_Partial', { x: 2, y: H * 2 + 0.1, z: -1 }, { x: 6, y: 0.2, z: 6 }, CONCRETE_DIRTY, 0.15);
 }
 
-// === 建物B: 崩壊アパート (北東) ===
+// === Building B: Collapsed Apartment (Northeast) ===
 async function createBuildingB(client: ResoniteLinkClient, parentId: string): Promise<void> {
-  console.log('  建物B: 崩壊アパートを作成中...');
+  console.log('  Building B: Creating collapsed apartment...');
 
   const pos = { x: 15, y: 0, z: 15 };
   const W = 8, D = 10, H = 3, T = 0.25;
@@ -141,50 +141,50 @@ async function createBuildingB(client: ResoniteLinkClient, parentId: string): Pr
   if (!building?.id) return;
   const bId = building.id;
 
-  // 1F 床
+  // 1F floor
   await createBox(client, bId, 'Floor1F', { x: 0, y: 0.1, z: 0 }, { x: W, y: 0.2, z: D }, CONCRETE_DIRTY, 0.15);
 
-  // 1F 壁
+  // 1F walls
   await createBox(client, bId, 'Wall1F_N', { x: 0, y: H/2, z: -D/2 }, { x: W, y: H, z: T }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall1F_S', { x: 0, y: H/2, z: D/2 }, { x: W, y: H, z: T }, CONCRETE, 0.2);
-  // 西壁に入口
+  // Entrance on west wall
   await createBox(client, bId, 'Wall1F_W_L', { x: -W/2, y: H/2, z: -3 }, { x: T, y: H, z: 4 }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall1F_W_R', { x: -W/2, y: H/2, z: 3 }, { x: T, y: H, z: 4 }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall1F_W_Top', { x: -W/2, y: 2.7, z: 0 }, { x: T, y: 0.6, z: 2 }, CONCRETE, 0.2);
-  // 東壁 (崩壊)
+  // East wall (collapsed)
   await createBox(client, bId, 'Wall1F_E_Partial', { x: W/2, y: 1, z: -3 }, { x: T, y: 2, z: 4 }, CONCRETE, 0.2);
 
-  // 仕切り壁
+  // Partition wall
   await createBox(client, bId, 'Divider', { x: 0, y: H/2, z: 0 }, { x: T, y: H, z: D - 1 }, CONCRETE_DIRTY, 0.2);
 
-  // 2F 床 (半分崩壊 - 西側のみ残存)
+  // 2F floor (half collapsed - only west side remains)
   await createBox(client, bId, 'Floor2F', { x: -2, y: H + 0.1, z: 0 }, { x: 4, y: 0.2, z: D - 1 }, CONCRETE_DIRTY, 0.15);
 
-  // 2F 壁 (残存部分のみ)
+  // 2F walls (remaining section only)
   await createBox(client, bId, 'Wall2F_N', { x: -2, y: H + H/2, z: -D/2 }, { x: 4, y: H, z: T }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall2F_W', { x: -W/2, y: H + H/2, z: 0 }, { x: T, y: H, z: D }, CONCRETE, 0.2);
 
-  // 外階段 (西面)
+  // External stairs (west side)
   await client.addSlot({ parentId: bId, name: 'ExternalStairs', position: { x: -5, y: 0, z: 0 }, isActive: true });
   const stairs = await client.findSlotByName('ExternalStairs', bId, 1);
   if (stairs?.id) {
     for (let i = 0; i < 6; i++) {
       await createBox(client, stairs.id, `Step_${i}`, { x: 0, y: 0.3 + i * 0.5, z: -1.5 + i * 0.5 }, { x: 1.2, y: 0.2, z: 0.6 }, RUST, 0.3, 0.4);
     }
-    // 手すり
+    // Handrails
     await createBox(client, stairs.id, 'Rail_L', { x: -0.5, y: 1.8, z: 0 }, { x: 0.05, y: 0.8, z: 3 }, RUST, 0.3, 0.5);
     await createBox(client, stairs.id, 'Rail_R', { x: 0.5, y: 1.8, z: 0 }, { x: 0.05, y: 0.8, z: 3 }, RUST, 0.3, 0.5);
   }
 
-  // 崩壊した瓦礫 (東側)
+  // Collapsed rubble (east side)
   await createBox(client, bId, 'Collapse_1', { x: 3, y: 0.5, z: 2 }, { x: 2, y: 1, z: 2 }, RUBBLE, 0.1);
   await createBox(client, bId, 'Collapse_2', { x: 2.5, y: 0.3, z: -2 }, { x: 1.5, y: 0.6, z: 1.5 }, RUBBLE, 0.1);
   await createBox(client, bId, 'Collapse_3', { x: 4, y: 1, z: 0 }, { x: 1, y: 2, z: 3 }, RUBBLE, 0.1);
 }
 
-// === 建物C: 倉庫 (南西) ===
+// === Building C: Warehouse (Southwest) ===
 async function createBuildingC(client: ResoniteLinkClient, parentId: string): Promise<void> {
-  console.log('  建物C: 倉庫を作成中...');
+  console.log('  Building C: Creating warehouse...');
 
   const pos = { x: -15, y: 0, z: 15 };
   const W = 12, D = 8, H = 5, T = 0.3;
@@ -194,42 +194,42 @@ async function createBuildingC(client: ResoniteLinkClient, parentId: string): Pr
   if (!building?.id) return;
   const bId = building.id;
 
-  // 床
+  // Floor
   await createBox(client, bId, 'Floor', { x: 0, y: 0.1, z: 0 }, { x: W, y: 0.2, z: D }, CONCRETE_DIRTY, 0.15);
 
-  // 壁
+  // Walls
   await createBox(client, bId, 'Wall_N', { x: 0, y: H/2, z: -D/2 }, { x: W, y: H, z: T }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall_S', { x: 0, y: H/2, z: D/2 }, { x: W, y: H, z: T }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall_W', { x: -W/2, y: H/2, z: 0 }, { x: T, y: H, z: D }, CONCRETE, 0.2);
-  // 東壁 (大きなシャッター入口)
+  // East wall (large shutter entrance)
   await createBox(client, bId, 'Wall_E_L', { x: W/2, y: H/2, z: -3 }, { x: T, y: H, z: 2 }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall_E_R', { x: W/2, y: H/2, z: 3 }, { x: T, y: H, z: 2 }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall_E_Top', { x: W/2, y: 4.5, z: 0 }, { x: T, y: 1, z: 4 }, CONCRETE, 0.2);
 
-  // シャッター (半開き)
+  // Shutter (half open)
   await createBox(client, bId, 'Shutter', { x: W/2 + 0.05, y: 3, z: 0 }, { x: 0.1, y: 2, z: 3.8 }, RUST, 0.3, 0.4);
 
-  // 北壁に小さなドア
+  // Small door on north wall
   await createBox(client, bId, 'Door_N', { x: -3, y: 1.2, z: -D/2 - 0.05 }, { x: 1, y: 2.4, z: 0.1 }, OLD_WOOD, 0.2);
 
-  // 内部の棚
+  // Interior shelves
   await createBox(client, bId, 'Shelf_1', { x: -4, y: 1, z: -2 }, { x: 2, y: 2, z: 0.5 }, RUST, 0.3, 0.3);
   await createBox(client, bId, 'Shelf_2', { x: -4, y: 1, z: 2 }, { x: 2, y: 2, z: 0.5 }, RUST, 0.3, 0.3);
 
-  // 木箱
+  // Wooden crates
   await createBox(client, bId, 'Crate_1', { x: 0, y: 0.4, z: -1 }, { x: 0.8, y: 0.8, z: 0.8 }, OLD_WOOD, 0.2);
   await createBox(client, bId, 'Crate_2', { x: 0.5, y: 0.4, z: 0.5 }, { x: 0.8, y: 0.8, z: 0.8 }, OLD_WOOD, 0.2);
   await createBox(client, bId, 'Crate_3', { x: 0.2, y: 1.2, z: -0.3 }, { x: 0.8, y: 0.8, z: 0.8 }, OLD_WOOD, 0.2);
 
-  // 屋根 (穴あり)
+  // Roof (with holes)
   await createBox(client, bId, 'Roof_W', { x: -3, y: H + 0.1, z: 0 }, { x: 6, y: 0.2, z: D }, CONCRETE_DIRTY, 0.15);
   await createBox(client, bId, 'Roof_E', { x: 4, y: H + 0.1, z: 0 }, { x: 4, y: 0.2, z: D }, CONCRETE_DIRTY, 0.15);
-  // 中央に穴 (光が入る)
+  // Hole in center (light comes through)
 }
 
-// === 建物D: 廃商店 (南東) ===
+// === Building D: Abandoned Shop (Southeast) ===
 async function createBuildingD(client: ResoniteLinkClient, parentId: string): Promise<void> {
-  console.log('  建物D: 廃商店を作成中...');
+  console.log('  Building D: Creating abandoned shop...');
 
   const pos = { x: 15, y: 0, z: -15 };
   const W = 8, D = 6, H = 4, T = 0.25;
@@ -239,51 +239,51 @@ async function createBuildingD(client: ResoniteLinkClient, parentId: string): Pr
   if (!building?.id) return;
   const bId = building.id;
 
-  // 床
+  // Floor
   await createBox(client, bId, 'Floor', { x: 0, y: 0.1, z: 0 }, { x: W, y: 0.2, z: D }, OLD_WOOD, 0.2);
 
-  // 壁
+  // Walls
   await createBox(client, bId, 'Wall_N', { x: 0, y: H/2, z: -D/2 }, { x: W, y: H, z: T }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall_S', { x: 0, y: H/2, z: D/2 }, { x: W, y: H, z: T }, CONCRETE, 0.2);
-  // 西壁 (ショーウィンドウ破損)
+  // West wall (broken display window)
   await createBox(client, bId, 'Wall_W_Lower', { x: -W/2, y: 0.5, z: 0 }, { x: T, y: 1, z: D }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall_W_Upper', { x: -W/2, y: 3.5, z: 0 }, { x: T, y: 1, z: D }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall_W_Side_N', { x: -W/2, y: 2, z: -2.5 }, { x: T, y: 2, z: 1 }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall_W_Side_S', { x: -W/2, y: 2, z: 2.5 }, { x: T, y: 2, z: 1 }, CONCRETE, 0.2);
-  // 東壁 (裏口)
+  // East wall (back entrance)
   await createBox(client, bId, 'Wall_E_L', { x: W/2, y: H/2, z: -1.5 }, { x: T, y: H, z: 3 }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall_E_R', { x: W/2, y: H/2, z: 2 }, { x: T, y: H, z: 2 }, CONCRETE, 0.2);
   await createBox(client, bId, 'Wall_E_Top', { x: W/2, y: 3.5, z: 0.5 }, { x: T, y: 1, z: 1 }, CONCRETE, 0.2);
 
-  // カウンター
+  // Counter
   await createBox(client, bId, 'Counter', { x: 1, y: 0.5, z: -1.5 }, { x: 3, y: 1, z: 1 }, OLD_WOOD, 0.2);
 
-  // 棚 (倒れかけ)
+  // Shelf (falling over)
   await createBox(client, bId, 'Shelf_Fallen', { x: -1.5, y: 0.6, z: 1 }, { x: 0.4, y: 1.2, z: 2 }, OLD_WOOD, 0.2);
 
-  // 看板 (傾いて落ちかけ)
+  // Sign (tilted and falling)
   await client.addSlot({ parentId: bId, name: 'FallingSign', position: { x: -W/2 - 0.5, y: 3.5, z: 0 },
-    rotation: { x: 0, y: 0, z: 0.17, w: 0.98 }, isActive: true }); // 約20度傾き
+    rotation: { x: 0, y: 0, z: 0.17, w: 0.98 }, isActive: true }); // About 20 degrees tilt
   const sign = await client.findSlotByName('FallingSign', bId, 1);
   if (sign?.id) {
     await createBox(client, sign.id, 'SignBoard', { x: 0, y: 0, z: 0 }, { x: 0.2, y: 1, z: 3 }, RUST, 0.3, 0.3);
   }
 
-  // 屋根
+  // Roof
   await createBox(client, bId, 'Roof', { x: 0, y: H + 0.1, z: 0 }, { x: W + 0.5, y: 0.2, z: D + 0.5 }, CONCRETE_DIRTY, 0.15);
 
-  // 割れたガラス片
+  // Broken glass pieces
   await createBox(client, bId, 'Glass_1', { x: -4.5, y: 0.05, z: 0 }, { x: 0.5, y: 0.1, z: 0.3 }, { r: 0.7, g: 0.8, b: 0.85 }, 0.9);
   await createBox(client, bId, 'Glass_2', { x: -4.3, y: 0.05, z: 0.8 }, { x: 0.3, y: 0.1, z: 0.4 }, { r: 0.7, g: 0.8, b: 0.85 }, 0.9);
 }
 
-// === カバーオブジェクト ===
+// === Cover Objects ===
 async function createCoverObjects(client: ResoniteLinkClient, parentId: string): Promise<void> {
-  console.log('  カバーオブジェクトを配置中...');
+  console.log('  Placing cover objects...');
 
-  // 車1 (横転) at (-8, 0.6, 0)
+  // Car 1 (overturned) at (-8, 0.6, 0)
   await client.addSlot({ parentId, name: 'Car1_Flipped', position: { x: -8, y: 0.6, z: 0 },
-    rotation: { x: 0, y: 0, z: 0.7, w: 0.7 }, isActive: true }); // 90度横倒し
+    rotation: { x: 0, y: 0, z: 0.7, w: 0.7 }, isActive: true }); // 90 degrees on its side
   const car1 = await client.findSlotByName('Car1_Flipped', parentId, 1);
   if (car1?.id) {
     await createBox(client, car1.id, 'Body', { x: 0, y: 0, z: 0 }, { x: 1.8, y: 0.5, z: 4 }, RUST, 0.3, 0.3);
@@ -292,7 +292,7 @@ async function createCoverObjects(client: ResoniteLinkClient, parentId: string):
     await createBox(client, car1.id, 'Wheel2', { x: 0.7, y: -0.3, z: -1 }, { x: 0.2, y: 0.5, z: 0.5 }, DARK_METAL, 0.2);
   }
 
-  // 車2 (廃車) at (+5, 0, -8)
+  // Car 2 (wrecked) at (+5, 0, -8)
   await client.addSlot({ parentId, name: 'Car2_Wrecked', position: { x: 5, y: 0, z: -8 }, isActive: true });
   const car2 = await client.findSlotByName('Car2_Wrecked', parentId, 1);
   if (car2?.id) {
@@ -305,7 +305,7 @@ async function createCoverObjects(client: ResoniteLinkClient, parentId: string):
     }
   }
 
-  // バリケード1 (土嚢) at (-5, 0, +5)
+  // Barricade 1 (sandbags) at (-5, 0, +5)
   await client.addSlot({ parentId, name: 'Barricade1', position: { x: -5, y: 0, z: 5 }, isActive: true });
   const bar1 = await client.findSlotByName('Barricade1', parentId, 1);
   if (bar1?.id) {
@@ -317,7 +317,7 @@ async function createCoverObjects(client: ResoniteLinkClient, parentId: string):
     await createBox(client, bar1.id, 'Board', { x: 0, y: 0.5, z: 0.2 }, { x: 1.5, y: 0.8, z: 0.1 }, OLD_WOOD, 0.2);
   }
 
-  // バリケード2 (コンクリートブロック) at (+3, 0, +7)
+  // Barricade 2 (concrete blocks) at (+3, 0, +7)
   await client.addSlot({ parentId, name: 'Barricade2', position: { x: 3, y: 0, z: 7 }, isActive: true });
   const bar2 = await client.findSlotByName('Barricade2', parentId, 1);
   if (bar2?.id) {
@@ -326,23 +326,23 @@ async function createCoverObjects(client: ResoniteLinkClient, parentId: string):
     await createBox(client, bar2.id, 'Block3', { x: 0.5, y: 0.9, z: 0 }, { x: 1, y: 0.6, z: 0.5 }, CONCRETE, 0.2);
   }
 
-  // コンテナ at (+8, 0, -5) - 中に入れる
+  // Container at (+8, 0, -5) - can enter inside
   await client.addSlot({ parentId, name: 'Container', position: { x: 8, y: 0, z: -5 }, isActive: true });
   const container = await client.findSlotByName('Container', parentId, 1);
   if (container?.id) {
     const cId = container.id;
-    // 床
+    // Floor
     await createBox(client, cId, 'Floor', { x: 0, y: 0.1, z: 0 }, { x: 2.4, y: 0.2, z: 6 }, RUST, 0.3, 0.4);
-    // 壁
+    // Walls
     await createBox(client, cId, 'Wall_L', { x: -1.2, y: 1.25, z: 0 }, { x: 0.1, y: 2.3, z: 6 }, RUST, 0.3, 0.4);
     await createBox(client, cId, 'Wall_R', { x: 1.2, y: 1.25, z: 0 }, { x: 0.1, y: 2.3, z: 6 }, RUST, 0.3, 0.4);
     await createBox(client, cId, 'Wall_Back', { x: 0, y: 1.25, z: -3 }, { x: 2.4, y: 2.3, z: 0.1 }, RUST, 0.3, 0.4);
-    // 天井
+    // Ceiling
     await createBox(client, cId, 'Roof', { x: 0, y: 2.4, z: 0 }, { x: 2.5, y: 0.1, z: 6 }, RUST, 0.3, 0.4);
-    // 前面は開いている
+    // Front is open
   }
 
-  // 瓦礫1 at (+10, 0, +2) - 登れる
+  // Rubble pile 1 at (+10, 0, +2) - can climb
   await client.addSlot({ parentId, name: 'RubblePile1', position: { x: 10, y: 0, z: 2 }, isActive: true });
   const rubble1 = await client.findSlotByName('RubblePile1', parentId, 1);
   if (rubble1?.id) {
@@ -351,7 +351,7 @@ async function createCoverObjects(client: ResoniteLinkClient, parentId: string):
     await createBox(client, rubble1.id, 'Top', { x: 0.5, y: 1.4, z: 0.3 }, { x: 1, y: 0.4, z: 1 }, RUBBLE, 0.1);
   }
 
-  // 瓦礫2 at (-3, 0, -10)
+  // Rubble pile 2 at (-3, 0, -10)
   await client.addSlot({ parentId, name: 'RubblePile2', position: { x: -3, y: 0, z: -10 }, isActive: true });
   const rubble2 = await client.findSlotByName('RubblePile2', parentId, 1);
   if (rubble2?.id) {
@@ -359,7 +359,7 @@ async function createCoverObjects(client: ResoniteLinkClient, parentId: string):
     await createBox(client, rubble2.id, 'Chunk2', { x: 0.4, y: 0.7, z: 0.2 }, { x: 0.8, y: 0.4, z: 0.8 }, RUBBLE, 0.1);
   }
 
-  // ドラム缶x3 at (-10, 0, +8)
+  // Drum barrels x3 at (-10, 0, +8)
   const drumPositions = [{ x: 0, z: 0 }, { x: 0.7, z: 0.3 }, { x: 0.3, z: 0.7 }];
   for (let i = 0; i < 3; i++) {
     await client.addSlot({ parentId, name: `Drum_${i}`,
@@ -370,7 +370,7 @@ async function createCoverObjects(client: ResoniteLinkClient, parentId: string):
     }
   }
 
-  // 木箱スタック at (+12, 0, +10)
+  // Wooden crate stack at (+12, 0, +10)
   await client.addSlot({ parentId, name: 'CrateStack', position: { x: 12, y: 0, z: 10 }, isActive: true });
   const crates = await client.findSlotByName('CrateStack', parentId, 1);
   if (crates?.id) {
@@ -386,56 +386,56 @@ async function main() {
   await client.connect();
 
   try {
-    console.log('=== FPS廃墟市街地ステージ作成開始 ===\n');
+    console.log('=== Starting FPS Ruins Urban Stage Creation ===\n');
 
-    // メインスロット作成
+    // Create main slot
     await client.addSlot({ name: 'FPS_RuinsMap', position: { x: 0, y: 0, z: 0 }, isActive: true });
     const map = await client.findSlotByName('FPS_RuinsMap', 'Root', 1);
     if (!map?.id) throw new Error('Failed to create main slot');
     const mapId = map.id;
 
-    // 1. 地面 (50x50m)
-    console.log('地面を作成中...');
+    // 1. Ground (50x50m)
+    console.log('Creating ground...');
     await createBox(client, mapId, 'Ground', { x: 0, y: -0.05, z: 0 }, { x: 50, y: 0.1, z: 50 }, CONCRETE_DIRTY, 0.15);
 
-    // 2. 道路 (十字路)
-    console.log('道路を作成中...');
-    // 南北道路
+    // 2. Roads (crossroad)
+    console.log('Creating roads...');
+    // North-south road
     await createBox(client, mapId, 'Road_NS', { x: 0, y: 0.01, z: 0 }, { x: 4, y: 0.02, z: 50 }, ASPHALT, 0.1);
-    // 東西道路
+    // East-west road
     await createBox(client, mapId, 'Road_EW', { x: 0, y: 0.01, z: 0 }, { x: 50, y: 0.02, z: 4 }, ASPHALT, 0.1);
-    // ひび割れライン
+    // Crack lines
     await createBox(client, mapId, 'Crack_1', { x: -5, y: 0.015, z: 0 }, { x: 3, y: 0.01, z: 0.1 }, CONCRETE_DIRTY, 0.1);
     await createBox(client, mapId, 'Crack_2', { x: 8, y: 0.015, z: 5 }, { x: 0.1, y: 0.01, z: 4 }, CONCRETE_DIRTY, 0.1);
 
-    // 3. 中央広場と噴水跡
-    console.log('中央広場を作成中...');
+    // 3. Central plaza and fountain remains
+    console.log('Creating central plaza...');
     await createBox(client, mapId, 'Plaza', { x: 0, y: 0.02, z: 0 }, { x: 12, y: 0.04, z: 12 }, CONCRETE, 0.2);
-    // 噴水跡
+    // Fountain remains
     await createBox(client, mapId, 'Fountain_Base', { x: 0, y: 0.15, z: 0 }, { x: 3, y: 0.3, z: 3 }, CONCRETE_DIRTY, 0.2);
     await createBox(client, mapId, 'Fountain_Inner', { x: 0, y: 0.25, z: 0 }, { x: 2.5, y: 0.2, z: 2.5 }, { r: 0.25, g: 0.28, b: 0.3 }, 0.3);
     await createBox(client, mapId, 'Fountain_Pillar', { x: 0, y: 0.6, z: 0 }, { x: 0.4, y: 0.8, z: 0.4 }, CONCRETE_DIRTY, 0.2);
 
-    // 4. 建物4棟
-    console.log('建物を作成中...');
+    // 4. Four buildings
+    console.log('Creating buildings...');
     await createBuildingA(client, mapId);
     await createBuildingB(client, mapId);
     await createBuildingC(client, mapId);
     await createBuildingD(client, mapId);
 
-    // 5. カバーオブジェクト
-    console.log('カバーオブジェクトを作成中...');
+    // 5. Cover objects
+    console.log('Creating cover objects...');
     await createCoverObjects(client, mapId);
 
-    console.log('\n=== FPS廃墟市街地ステージ作成完了 ===');
-    console.log('  - 地面: 50x50m');
-    console.log('  - 道路: 十字路 (4m幅)');
-    console.log('  - 中央広場: 12x12m + 噴水跡');
-    console.log('  - 建物A: 廃ビル (2階建て)');
-    console.log('  - 建物B: 崩壊アパート (外階段付き)');
-    console.log('  - 建物C: 倉庫 (シャッター入口)');
-    console.log('  - 建物D: 廃商店 (ショーウィンドウ)');
-    console.log('  - カバー: 車2台, バリケード2個, コンテナ, 瓦礫, ドラム缶, 木箱');
+    console.log('\n=== FPS Ruins Urban Stage Creation Complete ===');
+    console.log('  - Ground: 50x50m');
+    console.log('  - Roads: Crossroad (4m width)');
+    console.log('  - Central plaza: 12x12m + fountain remains');
+    console.log('  - Building A: Ruined office (2 floors)');
+    console.log('  - Building B: Collapsed apartment (with external stairs)');
+    console.log('  - Building C: Warehouse (shutter entrance)');
+    console.log('  - Building D: Abandoned shop (display window)');
+    console.log('  - Cover: 2 cars, 2 barricades, container, rubble, drum barrels, wooden crates');
 
   } finally {
     client.disconnect();

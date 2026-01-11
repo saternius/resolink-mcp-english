@@ -6,14 +6,14 @@ async function main() {
   await client.connect();
 
   try {
-    // 体育館のサイズ
-    const width = 30;   // X軸 横幅
-    const length = 50;  // Z軸 奥行き
-    const height = 15;  // Y軸 高さ
+    // Gymnasium dimensions
+    const width = 30;   // X axis width
+    const length = 50;  // Z axis depth
+    const height = 15;  // Y axis height
     const wallThickness = 0.5;
     const floorThickness = 0.3;
 
-    // ルートスロット作成
+    // Create root slot
     const rootName = `Gymnasium_${Date.now()}`;
     await client.addSlot({
       name: rootName,
@@ -25,7 +25,7 @@ async function main() {
 
     console.log('Creating gymnasium structure...');
 
-    // ヘルパー関数: ボックスパーツ作成
+    // Helper function: create box part
     async function createBoxPart(
       name: string,
       position: { x: number; y: number; z: number },
@@ -57,13 +57,13 @@ async function main() {
         componentType: '[FrooxEngine]FrooxEngine.PBS_Metallic',
       });
 
-      // コンポーネント取得
+      // Get components
       const slotData = await client.getSlot({ slotId: slot.id, includeComponentData: true });
       const mesh = slotData.data?.components?.find((c: any) => c.componentType?.includes('BoxMesh'));
       const renderer = slotData.data?.components?.find((c: any) => c.componentType?.includes('MeshRenderer'));
       const material = slotData.data?.components?.find((c: any) => c.componentType?.includes('PBS_Metallic'));
 
-      // BoxMesh サイズ設定
+      // BoxMesh size settings
       await client.updateComponent({
         id: mesh.id,
         members: {
@@ -71,7 +71,7 @@ async function main() {
         } as any,
       });
 
-      // マテリアル設定
+      // Material settings
       await client.updateComponent({
         id: material.id,
         members: {
@@ -81,7 +81,7 @@ async function main() {
         } as any,
       });
 
-      // MeshRenderer に Mesh と Material を設定
+      // Set Mesh and Material on MeshRenderer
       await client.updateComponent({
         id: renderer.id,
         members: {
@@ -89,7 +89,7 @@ async function main() {
         } as any,
       });
 
-      // Materials リスト設定（2段階）
+      // Materials list setup (2 stages)
       await client.updateComponent({
         id: renderer.id,
         members: {
@@ -108,7 +108,7 @@ async function main() {
       return slot.id;
     }
 
-    // ヘルパー関数: ライト作成
+    // Helper function: create light
     async function createLight(
       name: string,
       position: { x: number; y: number; z: number },
@@ -142,23 +142,23 @@ async function main() {
       return slot.id;
     }
 
-    // === 床 ===
+    // === Floor ===
     console.log('Creating floor...');
     await createBoxPart(
       'Floor',
       { x: 0, y: -floorThickness / 2, z: 0 },
       { x: width, y: floorThickness, z: length },
-      { r: 0.85, g: 0.75, b: 0.55, a: 1 }, // 木目調の色
+      { r: 0.85, g: 0.75, b: 0.55, a: 1 }, // wood-like color
       0.0,
       0.4
     );
 
-    // === コートライン（床の上に薄く） ===
+    // === Court lines (thin on floor) ===
     console.log('Creating court lines...');
     const lineHeight = 0.02;
     const lineY = floorThickness / 2 + lineHeight / 2;
 
-    // センターライン
+    // Center line
     await createBoxPart(
       'CenterLine',
       { x: 0, y: lineY, z: 0 },
@@ -168,7 +168,7 @@ async function main() {
       0.2
     );
 
-    // センターサークル（四角で代用）
+    // Center circle (using square as substitute)
     await createBoxPart(
       'CenterCircle',
       { x: 0, y: lineY, z: 0 },
@@ -178,10 +178,10 @@ async function main() {
       0.2
     );
 
-    // コート境界線
+    // Court boundary lines
     const courtWidth = width - 4;
     const courtLength = length - 4;
-    // 左
+    // Left
     await createBoxPart(
       'CourtLineLeft',
       { x: -courtWidth / 2, y: lineY, z: 0 },
@@ -190,7 +190,7 @@ async function main() {
       0.0,
       0.2
     );
-    // 右
+    // Right
     await createBoxPart(
       'CourtLineRight',
       { x: courtWidth / 2, y: lineY, z: 0 },
@@ -199,7 +199,7 @@ async function main() {
       0.0,
       0.2
     );
-    // 前
+    // Front
     await createBoxPart(
       'CourtLineFront',
       { x: 0, y: lineY, z: courtLength / 2 },
@@ -208,7 +208,7 @@ async function main() {
       0.0,
       0.2
     );
-    // 後
+    // Back
     await createBoxPart(
       'CourtLineBack',
       { x: 0, y: lineY, z: -courtLength / 2 },
@@ -218,11 +218,11 @@ async function main() {
       0.2
     );
 
-    // === 壁 ===
+    // === Walls ===
     console.log('Creating walls...');
-    const wallColor = { r: 0.9, g: 0.9, b: 0.85, a: 1 }; // オフホワイト
+    const wallColor = { r: 0.9, g: 0.9, b: 0.85, a: 1 }; // off-white
 
-    // 左壁
+    // Left wall
     await createBoxPart(
       'WallLeft',
       { x: -width / 2 - wallThickness / 2, y: height / 2, z: 0 },
@@ -232,7 +232,7 @@ async function main() {
       0.1
     );
 
-    // 右壁
+    // Right wall
     await createBoxPart(
       'WallRight',
       { x: width / 2 + wallThickness / 2, y: height / 2, z: 0 },
@@ -242,7 +242,7 @@ async function main() {
       0.1
     );
 
-    // 前壁
+    // Front wall
     await createBoxPart(
       'WallFront',
       { x: 0, y: height / 2, z: length / 2 + wallThickness / 2 },
@@ -252,7 +252,7 @@ async function main() {
       0.1
     );
 
-    // 後壁
+    // Back wall
     await createBoxPart(
       'WallBack',
       { x: 0, y: height / 2, z: -length / 2 - wallThickness / 2 },
@@ -262,7 +262,7 @@ async function main() {
       0.1
     );
 
-    // === 天井 ===
+    // === Ceiling ===
     console.log('Creating ceiling...');
     await createBoxPart(
       'Ceiling',
@@ -273,9 +273,9 @@ async function main() {
       0.1
     );
 
-    // === 天井の梁（トラス風） ===
+    // === Ceiling beams (truss style) ===
     console.log('Creating ceiling beams...');
-    const beamColor = { r: 0.3, g: 0.3, b: 0.35, a: 1 }; // ダークグレー
+    const beamColor = { r: 0.3, g: 0.3, b: 0.35, a: 1 }; // dark gray
     const beamWidth = 0.8;
     const beamHeight = 1.5;
     const beamSpacing = 8;
@@ -293,7 +293,7 @@ async function main() {
       );
     }
 
-    // === 照明 ===
+    // === Lighting ===
     console.log('Creating lights...');
     const lightSpacingX = width / 3;
     const lightSpacingZ = length / 5;
@@ -304,14 +304,14 @@ async function main() {
         await createLight(
           `Light_${xi + 1}_${zi + 2}`,
           { x: xi * lightSpacingX, y: lightY, z: zi * lightSpacingZ },
-          { r: 1, g: 0.98, b: 0.9 }, // 暖色系の白
+          { r: 1, g: 0.98, b: 0.9 }, // warm white
           2.0,
           25
         );
       }
     }
 
-    // === ステージ（前方） ===
+    // === Stage (front) ===
     console.log('Creating stage...');
     const stageDepth = 6;
     const stageHeight = 1.2;
@@ -319,18 +319,18 @@ async function main() {
       'Stage',
       { x: 0, y: stageHeight / 2, z: length / 2 - stageDepth / 2 - 2 },
       { x: width - 4, y: stageHeight, z: stageDepth },
-      { r: 0.4, g: 0.25, b: 0.15, a: 1 }, // ダークブラウン
+      { r: 0.4, g: 0.25, b: 0.15, a: 1 }, // dark brown
       0.0,
       0.5
     );
 
-    // === バスケットゴール支柱（両端） ===
+    // === Basketball hoop poles (both ends) ===
     console.log('Creating basketball hoops...');
     const hoopZ = length / 2 - 3;
     const backboardColor = { r: 0.9, g: 0.9, b: 0.9, a: 1 };
     const poleColor = { r: 0.5, g: 0.5, b: 0.55, a: 1 };
 
-    // 支柱（前側）
+    // Pole (front)
     await createBoxPart(
       'HoopPole_Front',
       { x: 0, y: 4, z: hoopZ },
@@ -339,7 +339,7 @@ async function main() {
       0.8,
       0.6
     );
-    // バックボード（前側）
+    // Backboard (front)
     await createBoxPart(
       'Backboard_Front',
       { x: 0, y: 4.5, z: hoopZ - 0.6 },
@@ -348,7 +348,7 @@ async function main() {
       0.1,
       0.8
     );
-    // リング（前側）
+    // Ring (front)
     await createBoxPart(
       'Ring_Front',
       { x: 0, y: 3.8, z: hoopZ - 1.0 },
@@ -358,7 +358,7 @@ async function main() {
       0.4
     );
 
-    // 支柱（後側）
+    // Pole (back)
     await createBoxPart(
       'HoopPole_Back',
       { x: 0, y: 4, z: -hoopZ },
@@ -367,7 +367,7 @@ async function main() {
       0.8,
       0.6
     );
-    // バックボード（後側）
+    // Backboard (back)
     await createBoxPart(
       'Backboard_Back',
       { x: 0, y: 4.5, z: -hoopZ + 0.6 },
@@ -376,7 +376,7 @@ async function main() {
       0.1,
       0.8
     );
-    // リング（後側）
+    // Ring (back)
     await createBoxPart(
       'Ring_Back',
       { x: 0, y: 3.8, z: -hoopZ + 1.0 },

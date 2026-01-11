@@ -58,7 +58,7 @@ async function createBox(
     } as any
   });
 
-  // CharacterCollider有効化
+  // Enable CharacterCollider
   if (collider?.id) {
     await client.updateComponent({
       id: collider.id,
@@ -75,7 +75,7 @@ async function main() {
   await client.connect();
 
   try {
-    console.log('=== 大量の障害物を追加 ===\n');
+    console.log('=== Adding many obstacles ===\n');
 
     const map = await client.findSlotByName('FPS_RuinsMap', 'Root', 1);
     if (!map?.id) throw new Error('FPS_RuinsMap not found');
@@ -83,8 +83,8 @@ async function main() {
 
     let totalCount = 0;
 
-    // === 大きな瓦礫の壁 (射線を遮る) ===
-    console.log('瓦礫の壁を追加中...');
+    // === Large rubble walls (blocking line of sight) ===
+    console.log('Adding rubble walls...');
     const rubbleWalls = [
       { x: -6, z: -6, w: 4, h: 2, d: 1.5 },
       { x: 6, z: 6, w: 3.5, h: 1.8, d: 1.2 },
@@ -101,8 +101,8 @@ async function main() {
       totalCount++;
     }
 
-    // === コンクリート壁の残骸 ===
-    console.log('コンクリート壁の残骸を追加中...');
+    // === Concrete wall remnants ===
+    console.log('Adding concrete wall remnants...');
     const concreteWalls = [
       { x: -12, z: 5, w: 0.3, h: 2.5, d: 4, rot: 0 },
       { x: 5, z: -12, w: 5, h: 2, d: 0.3, rot: 0 },
@@ -131,8 +131,8 @@ async function main() {
       totalCount++;
     }
 
-    // === 車の残骸 (大きなカバー) ===
-    console.log('車の残骸を追加中...');
+    // === Car wrecks (large cover) ===
+    console.log('Adding car wrecks...');
     const carWrecks = [
       { x: -10, z: 12, rot: 0.8 },
       { x: 10, z: -15, rot: 0.3 },
@@ -154,8 +154,8 @@ async function main() {
       }
     }
 
-    // === 土嚢バリケード (大量) ===
-    console.log('土嚢バリケードを追加中...');
+    // === Sandbag barricades (many) ===
+    console.log('Adding sandbag barricades...');
     const sandbagPositions = [
       { x: -3, z: 3 }, { x: 3, z: -3 }, { x: -7, z: -10 }, { x: 7, z: 10 },
       { x: -12, z: 8 }, { x: 12, z: -8 }, { x: -5, z: 18 }, { x: 5, z: -18 },
@@ -184,8 +184,8 @@ async function main() {
       }
     }
 
-    // === 木箱スタック ===
-    console.log('木箱スタックを追加中...');
+    // === Wooden crate stacks ===
+    console.log('Adding wooden crate stacks...');
     const cratePositions = [
       { x: -8, z: -8 }, { x: 8, z: 8 }, { x: -12, z: 12 }, { x: 12, z: -12 },
       { x: -3, z: -12 }, { x: 3, z: 12 }, { x: -15, z: -8 }, { x: 15, z: 8 },
@@ -210,8 +210,8 @@ async function main() {
       }
     }
 
-    // === コンテナ (追加) ===
-    console.log('コンテナを追加中...');
+    // === Containers (additional) ===
+    console.log('Adding containers...');
     const containerPositions = [
       { x: -18, z: -18, rot: 0.3 },
       { x: 18, z: 18, rot: 1.2 },
@@ -233,8 +233,8 @@ async function main() {
       }
     }
 
-    // === コンクリートブロック (大量) ===
-    console.log('コンクリートブロックを追加中...');
+    // === Concrete blocks (many) ===
+    console.log('Adding concrete blocks...');
     const blockPositions = [
       { x: -4, z: -4 }, { x: 4, z: 4 }, { x: -8, z: 4 }, { x: 8, z: -4 },
       { x: -12, z: -4 }, { x: 12, z: 4 }, { x: -4, z: -12 }, { x: 4, z: 12 },
@@ -257,8 +257,8 @@ async function main() {
       }
     }
 
-    // === ドラム缶 (大量) ===
-    console.log('ドラム缶を追加中...');
+    // === Drum barrels (many) ===
+    console.log('Adding drum barrels...');
     const drumPositions = [
       { x: -7, z: 7 }, { x: 7, z: -7 }, { x: -11, z: 11 }, { x: 11, z: -11 },
       { x: -3, z: -7 }, { x: 3, z: 7 }, { x: -17, z: 3 }, { x: 17, z: -3 },
@@ -275,8 +275,8 @@ async function main() {
       }
     }
 
-    // === 大きな瓦礫の山 ===
-    console.log('瓦礫の山を追加中...');
+    // === Large rubble piles ===
+    console.log('Adding rubble piles...');
     const rubblePilePositions = [
       { x: -5, z: -10, s: 1.5 }, { x: 5, z: 10, s: 1.8 },
       { x: -10, z: 5, s: 1.3 }, { x: 10, z: -5, s: 1.6 },
@@ -299,8 +299,8 @@ async function main() {
       }
     }
 
-    // === 倒れた柱 ===
-    console.log('倒れた柱を追加中...');
+    // === Fallen pillars ===
+    console.log('Adding fallen pillars...');
     const fallenPillars = [
       { x: -8, z: 3, rot: 0.2 },
       { x: 8, z: -3, rot: 1.5 },
@@ -320,8 +320,8 @@ async function main() {
       }
     }
 
-    console.log(`\n=== 完了: ${totalCount}個のオブジェクトを追加 ===`);
-    console.log('射線を遮る障害物を大量に配置しました！');
+    console.log(`\n=== Complete: Added ${totalCount} objects ===`);
+    console.log('Placed many obstacles to block line of sight!');
 
   } finally {
     client.disconnect();

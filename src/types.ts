@@ -66,9 +66,9 @@ export interface Reference {
 }
 
 /**
- * Empty type - ProtoFlux出力メンバーを表す
- * ResoniteLinkの更新により、ノードの出力が $type: "empty" として返されるようになった
- * この id を使って他のノードの入力に接続できる
+ * Empty type - Represents ProtoFlux output members
+ * With the ResoniteLink update, node outputs are now returned as $type: "empty"
+ * This id can be used to connect to other node inputs
  */
 export interface EmptyMember {
   $type: 'empty';

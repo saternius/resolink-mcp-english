@@ -1,10 +1,10 @@
 /**
- * おみくじUIX作成スクリプト
- * 使い方: npx tsx src/scripts/create-omikuji.ts [ws://localhost:25218]
+ * Fortune UIX Creation Script
+ * Usage: npx tsx src/scripts/create-omikuji.ts [ws://localhost:25218]
  */
 import { ResoniteLinkClient } from '../client.js';
 
-const FORTUNES = ['大吉', '中吉', '小吉', '吉', '末吉', '凶', '大凶'];
+const FORTUNES = ['Great Luck', 'Good Luck', 'Small Luck', 'Luck', 'Uncertain Luck', 'Bad Luck', 'Terrible Luck'];
 const WS_URL = process.argv[2] || 'ws://localhost:25218';
 
 async function main() {
@@ -13,7 +13,7 @@ async function main() {
   console.log('Connected to Resonite');
 
   try {
-    // 1. メインスロット作成
+    // 1. Create main slot
     const slotName = `Omikuji_${Date.now()}`;
     await client.addSlot({
       name: slotName,
@@ -26,13 +26,13 @@ async function main() {
     const mainId = mainSlot.id;
     console.log(`Main slot: ${mainId}`);
 
-    // スケールを0.001に設定
+    // Set scale to 0.001
     await client.updateSlot({
       id: mainId,
       scale: { x: 0.001, y: 0.001, z: 0.001 },
     });
 
-    // 2. Canvas + Grabbable追加（メインスロットに）
+    // 2. Add Canvas + Grabbable (to main slot)
     await client.addComponent({ containerSlotId: mainId, componentType: '[FrooxEngine]FrooxEngine.UIX.Canvas' });
     await client.addComponent({ containerSlotId: mainId, componentType: '[FrooxEngine]FrooxEngine.Grabbable' });
 
@@ -46,7 +46,7 @@ async function main() {
     }
     console.log('Canvas configured');
 
-    // 3. 背景スロット作成
+    // 3. Create background slot
     await client.addSlot({ parentId: mainId, name: 'Background' });
     slotData = await client.getSlot({ slotId: mainId, depth: 1 });
     const bgSlot = slotData.data?.children?.find((c: any) => c.name?.value === 'Background');
@@ -81,7 +81,7 @@ async function main() {
     }
     console.log('Background created');
 
-    // 4. タイトル
+    // 4. Title
     await client.addSlot({ parentId: mainId, name: 'Title' });
     slotData = await client.getSlot({ slotId: mainId, depth: 1 });
     const titleSlot = slotData.data?.children?.find((c: any) => c.name?.value === 'Title');
@@ -110,7 +110,7 @@ async function main() {
       await client.updateComponent({
         id: titleText.id,
         members: {
-          Content: { $type: 'string', value: 'おみくじ' },
+          Content: { $type: 'string', value: 'Fortune' },
           Size: { $type: 'float', value: 48 },
           Color: { $type: 'colorX', value: { r: 0.6, g: 0.1, b: 0.1, a: 1 } },
           HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -120,7 +120,7 @@ async function main() {
     }
     console.log('Title created');
 
-    // 5. 結果表示
+    // 5. Result display
     await client.addSlot({ parentId: mainId, name: 'Result' });
     slotData = await client.getSlot({ slotId: mainId, depth: 1 });
     const resultSlot = slotData.data?.children?.find((c: any) => c.name?.value === 'Result');
@@ -159,7 +159,7 @@ async function main() {
     }
     console.log('Result created');
 
-    // 6. ボタン
+    // 6. Button
     await client.addSlot({ parentId: mainId, name: 'DrawButton' });
     slotData = await client.getSlot({ slotId: mainId, depth: 1 });
     const btnSlot = slotData.data?.children?.find((c: any) => c.name?.value === 'DrawButton');
@@ -201,7 +201,7 @@ async function main() {
       await client.updateComponent({
         id: btnText.id,
         members: {
-          Content: { $type: 'string', value: '引く' },
+          Content: { $type: 'string', value: 'Draw' },
           Size: { $type: 'float', value: 36 },
           Color: { $type: 'colorX', value: { r: 1, g: 1, b: 1, a: 1 } },
           HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -220,7 +220,7 @@ async function main() {
     }
     console.log('Button created');
 
-    // 7. GameState（ValueField + ValueDriver）
+    // 7. GameState (ValueField + ValueDriver)
     await client.addSlot({ parentId: mainId, name: 'GameState' });
     slotData = await client.getSlot({ slotId: mainId, depth: 1 });
     const stateSlot = slotData.data?.children?.find((c: any) => c.name?.value === 'GameState');
@@ -234,15 +234,15 @@ async function main() {
     const valueField = stateData.data?.components?.find((c: any) => c.componentType?.includes('ValueField'));
     const valueDriver = stateData.data?.components?.find((c: any) => c.componentType?.includes('ValueDriver'));
 
-    // ValueField.Valueを取得
+    // Get ValueField.Value
     const valueFieldDetails = await client.getComponent(valueField.id);
     const valueFieldValueId = valueFieldDetails.data.members.Value.id;
 
-    // Result TextのContentを取得
+    // Get Result Text Content
     const resultTextDetails = await client.getComponent(resultText.id);
     const resultContentId = resultTextDetails.data.members.Content.id;
 
-    // ValueDriverを設定
+    // Configure ValueDriver
     const valueDriverDetails = await client.getComponent(valueDriver.id);
     await client.updateComponent({
       id: valueDriver.id,
@@ -252,7 +252,7 @@ async function main() {
       } as any,
     });
 
-    // 初期値設定
+    // Set initial value
     await client.updateComponent({
       id: valueField.id,
       members: { Value: { $type: 'string', value: '？' } } as any,
@@ -266,7 +266,7 @@ async function main() {
     if (!fluxSlot?.id) throw new Error('Flux slot not found');
     const fluxId = fluxSlot.id;
 
-    // サブスロット作成
+    // Create sub-slots
     const fluxNodes = ['Receiver', 'TagValue', 'RandomInt', 'MinInput', 'MaxInput', 'Multiplex', 'GlobalRef', 'Source', 'Write'];
     for (let i = 0; i < FORTUNES.length; i++) {
       fluxNodes.push(`Fortune${i}`);
@@ -307,7 +307,7 @@ async function main() {
       members: { Value: { $type: 'string', value: 'DrawOmikuji' } } as any,
     });
 
-    // ReceiverのTagを設定
+    // Set Receiver Tag
     let receiverData = await client.getSlot({ slotId: receiverSlot.id, includeComponentData: true });
     const receiverComp = receiverData.data?.components?.find((c: any) => c.componentType?.includes('DynamicImpulseReceiver'));
     await client.updateComponent({
@@ -354,7 +354,7 @@ async function main() {
       } as any,
     });
 
-    // Fortune inputs (7個)
+    // Fortune inputs (7)
     const fortuneCompIds: string[] = [];
     for (let i = 0; i < FORTUNES.length; i++) {
       const fortuneSlot = getFluxChild(`Fortune${i}`);
@@ -379,13 +379,13 @@ async function main() {
     let muxData = await client.getSlot({ slotId: multiplexSlot.id, includeComponentData: true });
     const muxComp = muxData.data?.components?.find((c: any) => c.componentType?.includes('ObjectMultiplex'));
 
-    // Index接続
+    // Index connection
     await client.updateComponent({
       id: muxComp.id,
       members: { Index: { $type: 'reference', targetId: randomComp.id } } as any,
     });
 
-    // Inputsリスト追加
+    // Add Inputs list
     await client.updateComponent({
       id: muxComp.id,
       members: {
@@ -396,12 +396,12 @@ async function main() {
       } as any,
     });
 
-    // 少し待ってから再取得
+    // Wait a moment then re-fetch
     await new Promise(r => setTimeout(r, 100));
     const muxDetails = await client.getComponent(muxComp.id);
     const inputElements = muxDetails.data.members.Inputs.elements;
 
-    // 要素IDを使って参照設定
+    // Set references using element IDs
     if (inputElements?.length > 0) {
       await client.updateComponent({
         id: muxComp.id,
@@ -418,7 +418,7 @@ async function main() {
       });
     }
 
-    // Output ID取得
+    // Get Output ID
     const muxDetailsRefresh = await client.getComponent(muxComp.id);
     const muxOutputId = muxDetailsRefresh.data.members.Output.id;
 
@@ -473,12 +473,12 @@ async function main() {
 
     console.log('ProtoFlux created');
 
-    // ProtoFluxノードを初期化するため、一度非アクティブ→アクティブにする
+    // Deactivate and reactivate to initialize ProtoFlux nodes
     await client.updateSlot({ slotId: mainId, isActive: false });
     await client.updateSlot({ slotId: mainId, isActive: true });
     console.log('ProtoFlux initialized (reactivated)');
 
-    console.log(`\nDone! おみくじUIX: ${slotName}`);
+    console.log(`\nDone! Fortune UIX: ${slotName}`);
 
   } finally {
     client.disconnect();

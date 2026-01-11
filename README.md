@@ -1,23 +1,23 @@
 # ResoniteLink MCP
 
-ResoniteLink WebSocket プロトコルを使用して Resonite VR ワールドを操作するための MCP サーバ & CLI ツール。
+MCP server & CLI tool for controlling Resonite VR worlds using the ResoniteLink WebSocket protocol.
 
-## インストール
+## Installation
 
 ```bash
 npm install
 npm run build
 ```
 
-## MCP サーバとして使用
+## Using as MCP Server
 
-### Claude Code 設定
+### Claude Code Configuration
 
-プロジェクトルートの `.mcp.json` に設定済み。Claude Code を再起動すると自動的にMCPサーバーが利用可能になります。
+Already configured in `.mcp.json` at the project root. Restart Claude Code to automatically make the MCP server available.
 
-### Claude Desktop 設定
+### Claude Desktop Configuration
 
-`claude_desktop_config.json` に以下を追加:
+Add the following to `claude_desktop_config.json`:
 
 ```json
 {
@@ -33,99 +33,99 @@ npm run build
 }
 ```
 
-### 利用可能なツール
+### Available Tools
 
-| ツール | 説明 |
-|--------|------|
-| `connect` | Resonite に接続 |
-| `disconnect` | 接続を切断 |
-| `get_slot` | スロット情報を取得 |
-| `find_slot` | 名前でスロットを検索 |
-| `add_slot` | スロットを追加 |
-| `remove_slot` | スロットを削除 |
-| `update_slot` | スロットを更新 |
-| `add_component` | コンポーネントを追加 |
-| `get_component` | コンポーネント情報を取得 |
-| `update_component` | コンポーネントを更新 |
-| `remove_component` | コンポーネントを削除 |
-| `import_texture_file` | テクスチャをファイルからインポート |
-| `search_components` | コンポーネントを検索 |
-| `get_component_info` | コンポーネント詳細を取得 |
-| `list_categories` | カテゴリ一覧 |
-| `search_by_category` | カテゴリで検索 |
-| `search_by_member` | メンバー名で検索 |
-| `get_component_source` | ソースコードを取得 |
-| `grep_source` | ソースを全文検索 |
+| Tool | Description |
+|------|-------------|
+| `connect` | Connect to Resonite |
+| `disconnect` | Disconnect |
+| `get_slot` | Get slot information |
+| `find_slot` | Search for slot by name |
+| `add_slot` | Add a slot |
+| `remove_slot` | Remove a slot |
+| `update_slot` | Update a slot |
+| `add_component` | Add a component |
+| `get_component` | Get component information |
+| `update_component` | Update a component |
+| `remove_component` | Remove a component |
+| `import_texture_file` | Import texture from file |
+| `search_components` | Search for components |
+| `get_component_info` | Get component details |
+| `list_categories` | List categories |
+| `search_by_category` | Search by category |
+| `search_by_member` | Search by member name |
+| `get_component_source` | Get source code |
+| `grep_source` | Full-text search source |
 
-## CLI として使用
+## Using as CLI
 
-### WebSocket URL の指定方法
+### Specifying WebSocket URL
 
-CLI は WebSocket URL を以下の優先順位で決定します:
+The CLI determines the WebSocket URL in the following priority order:
 
-1. コマンドライン引数 `--url` (最優先)
-2. 環境変数 `RESONITELINK_URL`
-3. デフォルト値: `ws://localhost:29551`
+1. Command line argument `--url` (highest priority)
+2. Environment variable `RESONITELINK_URL`
+3. Default value: `ws://localhost:29551`
 
-**環境変数で設定する例:**
+**Example using environment variable:**
 
 ```bash
 # Windows (PowerShell)
 $env:RESONITELINK_URL = "ws://localhost:29469"
 
-# Windows (コマンドプロンプト)
+# Windows (Command Prompt)
 set RESONITELINK_URL=ws://localhost:29469
 
 # Linux/Mac
 export RESONITELINK_URL=ws://localhost:29469
 ```
 
-環境変数を設定すれば、毎回 `--url` オプションを指定する必要がなくなります。
+Setting the environment variable eliminates the need to specify the `--url` option every time.
 
-### 基本的なコマンド
+### Basic Commands
 
 ```bash
-# Rootスロット情報を取得
+# Get Root slot information
 node dist/cli.js root --depth 1
 
-# 特定のスロット情報を取得
+# Get specific slot information
 node dist/cli.js get-slot --id <slotId> --depth 1
 
-# コンポーネント情報も含めて取得
+# Include component information
 node dist/cli.js get-slot --id <slotId> --components
 
-# 名前でスロットを検索
+# Search for slot by name
 node dist/cli.js find --name MyObject
 
-# スロットを追加
+# Add a slot
 node dist/cli.js add-slot --name NewSlot --position 0,1,0
 
-# 親スロットを指定してスロットを追加
+# Add slot with parent specified
 node dist/cli.js add-slot --parent <parentId> --name MySlot --position 0,1,0 --scale 1,1,1
 
-# コンポーネントを追加
+# Add a component
 node dist/cli.js add-component --slot <slotId> --type "[FrooxEngine]FrooxEngine.BoxMesh"
 
-# スロットを更新
+# Update a slot
 node dist/cli.js update-slot --id <slotId> --name NewName --position 0,2,0
 
-# スロットを削除
+# Remove a slot
 node dist/cli.js remove-slot --id <slotId>
 
-# コンポーネントを取得
+# Get a component
 node dist/cli.js get-component --id <componentId>
 
-# コンポーネントを削除
+# Remove a component
 node dist/cli.js remove-component --id <componentId>
 
-# スロット階層をツリー表示
+# Display slot hierarchy as tree
 node dist/cli.js tree --depth 3
 
-# WebSocket URLを指定（異なるポートの場合）
+# Specify WebSocket URL (for different ports)
 node dist/cli.js root --url ws://localhost:9422 --depth 2
 ```
 
-## ライブラリとして使用
+## Using as Library
 
 ```typescript
 import { ResoniteLinkClient } from './src/index.js';
@@ -133,10 +133,10 @@ import { ResoniteLinkClient } from './src/index.js';
 const client = new ResoniteLinkClient({ url: 'ws://localhost:29551' });
 await client.connect();
 
-// スロットを追加
+// Add a slot
 await client.addSlot({ name: 'MyObject', position: { x: 0, y: 1, z: 0 } });
 
-// コンポーネントを追加
+// Add a component
 await client.addComponent({
   containerSlotId: slotId,
   componentType: '[FrooxEngine]FrooxEngine.BoxMesh'
@@ -145,77 +145,77 @@ await client.addComponent({
 client.disconnect();
 ```
 
-### クライアントオプション
+### Client Options
 
 ```typescript
 const client = new ResoniteLinkClient({
-  url: 'ws://localhost:29551',  // WebSocket URL（必須）
-  debug: true,                   // コンソールにログ出力
-  logFile: 'debug.log',          // ファイルにログ出力
-  requestTimeout: 30000,         // リクエストタイムアウト（ミリ秒、デフォルト: 30000）
-  autoReconnect: false,          // 自動再接続
-  reconnectInterval: 5000,       // 再接続間隔（ミリ秒）
+  url: 'ws://localhost:29551',  // WebSocket URL (required)
+  debug: true,                   // Output logs to console
+  logFile: 'debug.log',          // Output logs to file
+  requestTimeout: 30000,         // Request timeout (milliseconds, default: 30000)
+  autoReconnect: false,          // Auto reconnect
+  reconnectInterval: 5000,       // Reconnect interval (milliseconds)
 });
 ```
 
-### デバッグログ
+### Debug Logging
 
-問題が発生した場合、デバッグログを有効にすると SEND/RECV メッセージを確認できます：
+If issues occur, enabling debug logging allows you to check SEND/RECV messages:
 
 ```typescript
 const client = new ResoniteLinkClient({
   url: 'ws://localhost:29551',
-  debug: true,           // コンソール出力
-  logFile: 'debug.log',  // ファイル出力
+  debug: true,           // Console output
+  logFile: 'debug.log',  // File output
 });
 ```
 
-ログ例:
+Log example:
 ```
 [2026-01-08T06:10:24.504Z] SEND: { "$type": "addSlot", "messageId": "..." }
 [2026-01-08T06:10:24.506Z] RECV: { "success": true, "messageId": "...", "error": null }
 ```
 
-### リクエストタイムアウト
+### Request Timeout
 
-レスポンスが返らない場合（不正な形式のデータ送信時など）、タイムアウトでエラーが発生します：
+When no response is returned (e.g., when sending malformed data), a timeout error occurs:
 
 ```typescript
 const client = new ResoniteLinkClient({
   url: 'ws://localhost:29551',
-  requestTimeout: 10000,  // 10秒でタイムアウト
+  requestTimeout: 10000,  // Timeout after 10 seconds
 });
 ```
 
-タイムアウト発生時は `Error: Request timeout after 10000ms: updateComponent (...)` のようなエラーがスローされます。
+When a timeout occurs, an error like `Error: Request timeout after 10000ms: updateComponent (...)` is thrown.
 
-### テクスチャインポート
+### Texture Import
 
-ResoniteLink のアセットインポートAPIを使用して、テクスチャをインポートできます。
+You can import textures using the ResoniteLink asset import API.
 
-#### ファイルからインポート
+#### Import from File
 
 ```typescript
-// Resoniteホストのローカルファイルからテクスチャをインポート
+// Import texture from local file on Resonite host
 const result = await client.importTexture2DFile({
   filePath: 'C:/path/to/texture.png'
 });
 
 if (result.success) {
   console.log('Asset URL:', result.assetURL);
-  // assetURL を StaticTexture2D などに設定可能
+  // assetURL can be set to StaticTexture2D, etc.
 }
 ```
 
-#### 生データからインポート
+#### Import from Raw Data
 
 ```typescript
-// RGBAピクセルデータからテクスチャをインポート
+// Import texture from RGBA pixel data
 const width = 256;
 const height = 256;
 const rawData = Buffer.alloc(width * height * 4); // RGBA, 4 bytes per pixel
 
-// ピクセルデータを生成（例: グラデーション）
+// Generate pixel data (example: gradient)
 for (let y = 0; y < height; y++) {
   for (let x = 0; x < width; x++) {
     const offset = (y * width + x) * 4;
@@ -229,7 +229,7 @@ for (let y = 0; y < height; y++) {
 const result = await client.importTexture2DRawData({
   width,
   height,
-  colorProfile: 'sRGB',  // 'sRGB' または 'Linear'
+  colorProfile: 'sRGB',  // 'sRGB' or 'Linear'
   rawData
 });
 
@@ -238,33 +238,33 @@ if (result.success) {
 }
 ```
 
-#### 注意事項
+#### Notes
 
-- `filePath` は Resonite が動作しているホストのローカルパス
-- `assetURL` はセッション内でのみ有効（一時的なURL）
-- サポートされる形式: PNG, JPG など一般的な画像形式
-- 生データは RGBA フォーマット（1ピクセル4バイト）
+- `filePath` is a local path on the host running Resonite
+- `assetURL` is only valid within the session (temporary URL)
+- Supported formats: PNG, JPG and other common image formats
+- Raw data is in RGBA format (4 bytes per pixel)
 
-## 重要: ワールドシステムオブジェクト
+## Important: World System Objects
 
-Resonite ワールドの Root 以下には、削除してはいけないシステムオブジェクトがあります。
+Below the Root of a Resonite world, there are system objects that must not be deleted.
 
-### 削除禁止オブジェクト
+### Objects That Must Not Be Deleted
 
-| オブジェクト名 | 説明 |
-|--------------|------|
-| `Controllers` | コントローラー入力システム |
-| `Roles` | ユーザーロール管理 |
-| `SpawnArea` | ユーザーのスポーン位置 |
-| `Light` | ワールドの照明 |
-| `Skybox` | 空・背景 |
-| `User <...>` | 接続中のユーザー（削除するとキックされる） |
-| `__TEMP` | 一時オブジェクト管理 |
-| `Undo Manager` | アンドゥ履歴 |
-| `Assets` | 共有アセット |
-| `Clipboard Importer` | クリップボードインポート機能 |
+| Object Name | Description |
+|-------------|-------------|
+| `Controllers` | Controller input system |
+| `Roles` | User role management |
+| `SpawnArea` | User spawn location |
+| `Light` | World lighting |
+| `Skybox` | Sky/background |
+| `User <...>` | Connected users (deleting kicks them) |
+| `__TEMP` | Temporary object management |
+| `Undo Manager` | Undo history |
+| `Assets` | Shared assets |
+| `Clipboard Importer` | Clipboard import functionality |
 
-### 安全な削除方法
+### Safe Deletion Method
 
 ```typescript
 const SYSTEM_OBJECTS = [
@@ -272,36 +272,36 @@ const SYSTEM_OBJECTS = [
   '__TEMP', 'Undo Manager', 'Assets', 'Clipboard Importer'
 ];
 
-// システムオブジェクトとUserはスキップ
+// Skip system objects and Users
 if (SYSTEM_OBJECTS.includes(name) || name.startsWith('User ')) {
   continue;
 }
 ```
 
-## コンポーネントタイプの書式
+## Component Type Format
 
 ```
 [FrooxEngine]FrooxEngine.ComponentName
 ```
 
-### よく使うコンポーネント
+### Commonly Used Components
 
-| コンポーネント | 用途 |
-|--------------|------|
-| `BoxMesh` | 直方体メッシュ |
-| `SphereMesh` | 球体メッシュ |
-| `CylinderMesh` | 円柱メッシュ |
-| `ConeMesh` | 円錐メッシュ |
-| `BevelBoxMesh` | 角丸直方体 |
-| `RampMesh` | スロープ |
-| `FrameMesh` | フレーム |
-| `TorusMesh` | トーラス |
-| `CapsuleMesh` | カプセル |
-| `MeshRenderer` | メッシュ描画 |
-| `PBS_Metallic` | PBRマテリアル |
-| `Light` | ライト |
+| Component | Purpose |
+|-----------|---------|
+| `BoxMesh` | Box mesh |
+| `SphereMesh` | Sphere mesh |
+| `CylinderMesh` | Cylinder mesh |
+| `ConeMesh` | Cone mesh |
+| `BevelBoxMesh` | Rounded box |
+| `RampMesh` | Ramp/slope |
+| `FrameMesh` | Frame |
+| `TorusMesh` | Torus |
+| `CapsuleMesh` | Capsule |
+| `MeshRenderer` | Mesh rendering |
+| `PBS_Metallic` | PBR material |
+| `Light` | Light |
 
-### マテリアルの設定例
+### Material Configuration Example
 
 ```typescript
 await client.updateComponent({
@@ -314,27 +314,27 @@ await client.updateComponent({
 });
 ```
 
-### Enum型の設定（BlendMode, LightType など）
+### Enum Type Configuration (BlendMode, LightType, etc.)
 
-Enum 型のメンバーを更新する場合、以下の形式を使用する必要があります：
+When updating enum type members, the following format must be used:
 
 ```typescript
 {
-  $type: 'enum',      // 小文字の 'enum'
-  value: 'Alpha',     // 文字列で値を指定（数値ではない）
-  enumType: 'BlendMode'  // Enum の型名
+  $type: 'enum',      // lowercase 'enum'
+  value: 'Alpha',     // specify value as string (not number)
+  enumType: 'BlendMode'  // enum type name
 }
 ```
 
-#### BlendMode の値
+#### BlendMode Values
 
-| 値 | 説明 |
-|----|------|
-| `Opaque` | 不透明（デフォルト） |
-| `Cutout` | カットアウト（アルファテスト） |
-| `Alpha` | 半透明（アルファブレンド） |
+| Value | Description |
+|-------|-------------|
+| `Opaque` | Opaque (default) |
+| `Cutout` | Cutout (alpha test) |
+| `Alpha` | Translucent (alpha blend) |
 
-#### 半透明マテリアルの例
+#### Translucent Material Example
 
 ```typescript
 await client.updateComponent({
@@ -346,13 +346,13 @@ await client.updateComponent({
 });
 ```
 
-#### LightType の値
+#### LightType Values
 
-| 値 | 説明 |
-|----|------|
-| `Directional` | ディレクショナルライト |
-| `Point` | ポイントライト |
-| `Spot` | スポットライト |
+| Value | Description |
+|-------|-------------|
+| `Directional` | Directional light |
+| `Point` | Point light |
+| `Spot` | Spot light |
 
 ```typescript
 await client.updateComponent({
@@ -365,41 +365,41 @@ await client.updateComponent({
 });
 ```
 
-#### 注意事項
+#### Notes
 
-- `$type` は必ず小文字の `'enum'`（`'Enum'` ではない）
-- `value` は数値ではなく文字列で指定
-- `enumType` を省略すると動作しない場合がある
-- 正しくない形式を送信するとレスポンスが返らずタイムアウトする
+- `$type` must be lowercase `'enum'` (not `'Enum'`)
+- `value` is specified as string, not number
+- May not work if `enumType` is omitted
+- Sending incorrect format causes no response and timeout
 
-### メンバーの型一覧
+### Member Type List
 
-| $type | 説明 | 例 |
-|-------|------|-----|
-| `float` | 浮動小数点 | `{ $type: 'float', value: 0.5 }` |
-| `int` | 整数 | `{ $type: 'int', value: 10 }` |
-| `bool` | 真偽値 | `{ $type: 'bool', value: true }` |
-| `float2` | 2Dベクトル | `{ $type: 'float2', value: { x: 1, y: 1 } }` |
-| `float3` | 3Dベクトル | `{ $type: 'float3', value: { x: 1, y: 2, z: 3 } }` |
-| `floatQ` | クォータニオン | `{ $type: 'floatQ', value: { x: 0, y: 0, z: 0, w: 1 } }` |
-| `colorX` | 色 | `{ $type: 'colorX', value: { r: 1, g: 0, b: 0, a: 1, profile: 'sRGB' } }` |
-| `enum` | 列挙型 | `{ $type: 'enum', value: 'Alpha', enumType: 'BlendMode' }` |
-| `reference` | 参照 | `{ $type: 'reference', targetId: 'Reso_XXXXX' }` |
-| `list` | リスト | `{ $type: 'list', elements: [...] }` |
-| `empty` | 出力メンバー | `{ $type: 'empty', id: 'Reso_XXXXX' }` |
+| $type | Description | Example |
+|-------|-------------|---------|
+| `float` | Floating point | `{ $type: 'float', value: 0.5 }` |
+| `int` | Integer | `{ $type: 'int', value: 10 }` |
+| `bool` | Boolean | `{ $type: 'bool', value: true }` |
+| `float2` | 2D vector | `{ $type: 'float2', value: { x: 1, y: 1 } }` |
+| `float3` | 3D vector | `{ $type: 'float3', value: { x: 1, y: 2, z: 3 } }` |
+| `floatQ` | Quaternion | `{ $type: 'floatQ', value: { x: 0, y: 0, z: 0, w: 1 } }` |
+| `colorX` | Color | `{ $type: 'colorX', value: { r: 1, g: 0, b: 0, a: 1, profile: 'sRGB' } }` |
+| `enum` | Enumeration | `{ $type: 'enum', value: 'Alpha', enumType: 'BlendMode' }` |
+| `reference` | Reference | `{ $type: 'reference', targetId: 'Reso_XXXXX' }` |
+| `list` | List | `{ $type: 'list', elements: [...] }` |
+| `empty` | Output member | `{ $type: 'empty', id: 'Reso_XXXXX' }` |
 
-### empty 型（ProtoFlux 出力メンバー）
+### empty Type (ProtoFlux Output Member)
 
-ResoniteLink の更新により、ProtoFlux ノードの**出力メンバー**が `$type: "empty"` として返されるようになりました。
+With the ResoniteLink update, ProtoFlux node **output members** are now returned as `$type: "empty"`.
 
-#### 背景
+#### Background
 
-ProtoFlux ノードには入力（SyncRef）と出力（NodeValueOutput）があります：
+ProtoFlux nodes have inputs (SyncRef) and outputs (NodeValueOutput):
 
-- **入力**: 値を受け取る（reference型で返される）
-- **出力**: 値を出力する（以前は返されなかった → **今は empty 型で返される**）
+- **Input**: Receives values (returned as reference type)
+- **Output**: Outputs values (previously not returned → **now returned as empty type**)
 
-#### 例: GlobalTransform ノード
+#### Example: GlobalTransform Node
 
 ```json
 {
@@ -413,52 +413,52 @@ ProtoFlux ノードには入力（SyncRef）と出力（NodeValueOutput）があ
 }
 ```
 
-#### 出力メンバーの参照方法
+#### How to Reference Output Members
 
-出力メンバーの `id` を使って、他のノードの入力に接続できます：
+You can use the output member's `id` to connect to other node inputs:
 
 ```typescript
-// GlobalTransform の GlobalPosition 出力を取得
+// Get GlobalTransform's GlobalPosition output
 const globalTransformComp = slotData.data?.components?.find(c =>
   c.componentType?.includes('GlobalTransform')
 );
 const globalPositionId = globalTransformComp.members.GlobalPosition.id; // "Reso_82E"
 
-// ValueSub の A 入力に GlobalPosition を接続
+// Connect GlobalPosition to ValueSub's A input
 await client.updateComponent({
   id: subComp.id,
   members: {
-    A: { $type: 'reference', targetId: globalPositionId },  // 出力IDを直接参照！
+    A: { $type: 'reference', targetId: globalPositionId },  // Directly reference output ID!
   }
 });
 ```
 
-#### 以前との違い
+#### Differences from Before
 
-| 項目 | 以前 | 現在 |
-|------|------|------|
-| 出力メンバー | JSONに含まれない | `$type: "empty"` で返される |
-| 複数出力ノードの参照 | コンポーネントID全体を参照 → エラー | 出力IDを個別に参照 → 成功 |
+| Item | Before | Now |
+|------|--------|-----|
+| Output members | Not included in JSON | Returned as `$type: "empty"` |
+| Referencing multi-output nodes | Reference entire component ID → Error | Reference output IDs individually → Success |
 
-これにより、GlobalTransform のような複数出力を持つノードも正しく接続できるようになりました。
+This allows nodes with multiple outputs like GlobalTransform to be connected correctly.
 
-### Materials リストの更新（2段階）
+### Updating Materials List (Two Steps)
 
-MeshRenderer の Materials リストを更新するには2段階の操作が必要です。
+Updating MeshRenderer's Materials list requires a two-step operation.
 
-#### なぜ2段階必要か
+#### Why Two Steps Are Required
 
-ResoniteLink の制限により、リスト要素への参照設定は以下の動作をします：
+Due to ResoniteLink limitations, setting references to list elements behaves as follows:
 
-1. **1回目の更新**: リストに新しい要素が追加されるが、`targetId` は **null になる**
-2. **2回目の更新**: 要素の `id` を指定することで、既存要素の `targetId` を設定できる
+1. **First update**: New element is added to list, but `targetId` **becomes null**
+2. **Second update**: By specifying the element's `id`, you can set the `targetId` of the existing element
 
-つまり、要素の追加と参照の設定は別々の操作として行う必要があります。
+This means adding elements and setting references must be done as separate operations.
 
-#### コード例
+#### Code Example
 
 ```typescript
-// 1. まずリストに要素を追加（この時点では targetId は null になる）
+// 1. First add element to list (at this point targetId becomes null)
 await client.updateComponent({
   id: rendererId,
   members: {
@@ -469,11 +469,11 @@ await client.updateComponent({
   }
 });
 
-// 2. 追加された要素のIDを取得
+// 2. Get the added element's ID
 const rendererData = await client.getComponent(rendererId);
 const elementId = rendererData.data.members.Materials.elements[0].id;
 
-// 3. 要素のIDを指定して、参照を設定
+// 3. Specify element ID and set reference
 await client.updateComponent({
   id: rendererId,
   members: {
@@ -485,54 +485,54 @@ await client.updateComponent({
 });
 ```
 
-#### 重要なポイント
+#### Important Points
 
-- `id` フィールドを省略すると、新しい要素が追加される（既存要素は更新されない）
-- `id` フィールドを指定すると、その ID を持つ既存要素が更新される
-- 1回目で `targetId` を指定しても無視され、null になる
+- Omitting `id` field adds a new element (existing elements are not updated)
+- Specifying `id` field updates the existing element with that ID
+- Even if `targetId` is specified the first time, it gets ignored and becomes null
 
-## ProtoFlux コンポーネントの追加
+## Adding ProtoFlux Components
 
-ProtoFlux ノード（ジェネリック型コンポーネント）を追加するには、特定の形式が必要です。
+Adding ProtoFlux nodes (generic type components) requires a specific format.
 
-### 正しい形式
+### Correct Format
 
 ```
-[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.<コンポーネント名><型>
+[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.<ComponentName><Type>
 ```
 
-#### ポイント
+#### Key Points
 
-| 項目 | 正しい形式 | 間違った形式 |
-|------|-----------|-------------|
-| アセンブリ名 | `[ProtoFluxBindings]` | `[FrooxEngine]` |
-| 名前空間 | `FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes` | `FrooxEngine.ProtoFlux.CoreNodes` |
-| ジェネリック型 | `<bool>`, `<int>`, `<float>` | `<System.Boolean>`, `` `1[System.Boolean] `` |
+| Item | Correct Format | Wrong Format |
+|------|----------------|--------------|
+| Assembly name | `[ProtoFluxBindings]` | `[FrooxEngine]` |
+| Namespace | `FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes` | `FrooxEngine.ProtoFlux.CoreNodes` |
+| Generic type | `<bool>`, `<int>`, `<float>` | `<System.Boolean>`, `` `1[System.Boolean] `` |
 
-- **名前空間**: `FrooxEngine` が2回繰り返される
-- **型指定**: C# エイリアス（`bool`, `int`, `float`）を使用する（`System.Boolean` ではない）
-- **記法**: `<>` 形式を使用する（.NET のバッククォート記法 `` `1[...] `` ではない）
+- **Namespace**: `FrooxEngine` is repeated twice
+- **Type specification**: Use C# aliases (`bool`, `int`, `float`), not `System.Boolean`
+- **Notation**: Use `<>` format, not .NET's backtick notation `` `1[...] ``
 
-#### 複合型パラメータ（Slot, User など）
+#### Complex Type Parameters (Slot, User, etc.)
 
-スロットやユーザーなどの複合型を型パラメータに使う場合は、**アセンブリ名付きの完全修飾名**を使用する：
+When using complex types like Slot or User as type parameters, use **fully qualified names with assembly name**:
 
 ```
 [ProtoFluxBindings]...RefObjectInput<[FrooxEngine]FrooxEngine.Slot>
 ```
 
-| 型 | 正しい形式 | 間違った形式 |
-|----|-----------|-------------|
+| Type | Correct Format | Wrong Format |
+|------|----------------|--------------|
 | Slot | `<[FrooxEngine]FrooxEngine.Slot>` | `<Slot>`, `<FrooxEngine.Slot>` |
 | User | `<[FrooxEngine]FrooxEngine.User>` | `<User>` |
 | IButton | `<[FrooxEngine]FrooxEngine.IButton>` | `<IButton>` |
 
-**重要**: プリミティブ型（`int`, `float`, `bool` など）はエイリアスをそのまま使い、複合型（`Slot`, `User` など）は `[FrooxEngine]FrooxEngine.TypeName` 形式を使う。
+**Important**: Use aliases as-is for primitive types (`int`, `float`, `bool`, etc.), and use `[FrooxEngine]FrooxEngine.TypeName` format for complex types (`Slot`, `User`, etc.).
 
-### 動作確認済みコンポーネント
+### Verified Components
 
-| ノード | componentType |
-|--------|---------------|
+| Node | componentType |
+|------|---------------|
 | ValueInput\<int\> | `[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueInput<int>` |
 | ValueAdd\<int\> | `[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.ValueAdd<int>` |
 | ValueDisplay\<int\> | `[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueDisplay<int>` |
@@ -543,32 +543,32 @@ ProtoFlux ノード（ジェネリック型コンポーネント）を追加す�
 | ValueFieldDrive\<colorX\> | `[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueFieldDrive<colorX>` |
 | ValueFieldDrive\<bool\> | `[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueFieldDrive<bool>` |
 
-### コード例
+### Code Example
 
 ```typescript
-// ValueFieldDrive<floatQ> を追加（回転ドライブ用）
+// Add ValueFieldDrive<floatQ> (for rotation drive)
 await client.addComponent({
   containerSlotId: slotId,
   componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueFieldDrive<floatQ>'
 });
 
-// WorldTimeFloat を追加（時間取得用）
+// Add WorldTimeFloat (for getting time)
 await client.addComponent({
   containerSlotId: slotId,
   componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Time.WorldTimeFloat'
 });
 
-// HSV_ToColorX を追加（色変換用）
+// Add HSV_ToColorX (for color conversion)
 await client.addComponent({
   containerSlotId: slotId,
   componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Color.HSV_ToColorX'
 });
 ```
 
-### ProtoFlux ノード間の接続
+### Connecting ProtoFlux Nodes
 
 ```typescript
-// ValueAdd の A, B 入力に ValueInput ノードを接続
+// Connect ValueInput nodes to ValueAdd's A, B inputs
 await client.updateComponent({
   id: addCompId,
   members: {
@@ -577,7 +577,7 @@ await client.updateComponent({
   }
 });
 
-// ValueDisplay の Input に ValueAdd の出力を接続
+// Connect ValueAdd's output to ValueDisplay's Input
 await client.updateComponent({
   id: displayCompId,
   members: {
@@ -586,64 +586,64 @@ await client.updateComponent({
 });
 ```
 
-### よく使う ProtoFlux ノード
+### Commonly Used ProtoFlux Nodes
 
-| コンポーネント | 用途 |
-|--------------|------|
-| `ValueFieldDrive<T>` | フィールドをドライブ |
-| `ReferenceFieldDrive<T>` | 参照フィールドをドライブ |
-| `GlobalValue<T>` | グローバル値 |
-| `GlobalReference<T>` | グローバル参照 |
+| Component | Purpose |
+|-----------|---------|
+| `ValueFieldDrive<T>` | Drive a field |
+| `ReferenceFieldDrive<T>` | Drive a reference field |
+| `GlobalValue<T>` | Global value |
+| `GlobalReference<T>` | Global reference |
 
-### ProtoFlux ノードの配置
+### ProtoFlux Node Placement
 
-ProtoFlux ノードを追加する際は、各ノードを別々のスロットに配置し、適切な位置に並べることで視認性が向上します。
+When adding ProtoFlux nodes, placing each node in separate slots and arranging them at appropriate positions improves visibility.
 
-#### 座標系
+#### Coordinate System
 
-Resonite の座標系:
-- **X軸**: 左右（右が正）
-- **Y軸**: 上下（上が正）
-- **Z軸**: 前後（手前が正）
+Resonite's coordinate system:
+- **X-axis**: Left/Right (right is positive)
+- **Y-axis**: Up/Down (up is positive)
+- **Z-axis**: Front/Back (front is positive)
 
-ProtoFlux ノードは**左から右（X軸方向）**に配置するのが一般的です。
+ProtoFlux nodes are typically placed **from left to right (X-axis direction)**.
 
-#### 配置の基本パターン
+#### Basic Placement Pattern
 
 ```
-左 ────────────────────────────────────────────→ 右 (X軸)
+Left ────────────────────────────────────────────→ Right (X-axis)
 
-[入力ノード群]  →  [処理ノード]  →  [出力ノード]  →  [ドライブノード]
-   x=-1.5            x=-1.0           x=-0.5            x=0
+[Input Nodes]  →  [Processing Node]  →  [Output Node]  →  [Drive Node]
+   x=-1.5            x=-1.0              x=-0.5            x=0
 ```
 
-#### 複数入力がある場合
+#### When There Are Multiple Inputs
 
-Y軸で上下にずらして配置:
+Offset vertically on Y-axis:
 
 ```typescript
-// 入力1（上側）
+// Input 1 (upper)
 await client.addSlot({ name: 'Input1', position: { x: -1.5, y: 0.15, z: 0 } });
 
-// 入力2（下側）
+// Input 2 (lower)
 await client.addSlot({ name: 'Input2', position: { x: -1.5, y: -0.15, z: 0 } });
 
-// 処理ノード（中央）
+// Processing node (center)
 await client.addSlot({ name: 'Process', position: { x: -1.0, y: 0, z: 0 } });
 ```
 
-#### 実践例: 回転するボックス
+#### Practical Example: Rotating Box
 
 ```typescript
-// 親スロット
+// Parent slot
 const fluxSlot = await client.addSlot({ name: 'Flux', position: { x: 0, y: 2, z: 0 } });
 
-// 各ノードを左から右に配置
+// Arrange each node from left to right
 const nodes = [
-  { name: 'AxisInput',      x: -0.6, y: 0.15 },  // 回転軸入力
-  { name: 'TimeNode',       x: -0.6, y: -0.15 }, // 時間取得
-  { name: 'AxisAngleNode',  x: -0.3, y: 0 },     // 軸角度→クォータニオン変換
-  { name: 'DriveNode',      x: 0,    y: 0 },     // 回転ドライブ
+  { name: 'AxisInput',      x: -0.6, y: 0.15 },  // Rotation axis input
+  { name: 'TimeNode',       x: -0.6, y: -0.15 }, // Time getter
+  { name: 'AxisAngleNode',  x: -0.3, y: 0 },     // Axis angle → quaternion conversion
+  { name: 'DriveNode',      x: 0,    y: 0 },     // Rotation drive
 ];
 
 for (const node of nodes) {
@@ -655,80 +655,80 @@ for (const node of nodes) {
 }
 ```
 
-#### 配置のコツ
+#### Placement Tips
 
-| 項目 | 推奨値 |
-|------|--------|
-| ノード間の水平間隔 | 0.3〜0.5 |
-| 分岐時の垂直間隔 | 0.15〜0.3 |
-| 親スロットからの相対座標 | 使用する |
+| Item | Recommended Value |
+|------|-------------------|
+| Horizontal spacing between nodes | 0.3 to 0.5 |
+| Vertical spacing for branches | 0.15 to 0.3 |
+| Relative coordinates from parent slot | Use |
 
-- 親スロット（例: `Flux`）を作成し、その下に各ノードを配置
-- 位置は親スロットからの相対座標になる
-- データフローが左から右に流れるように配置
-- 分岐がある場合は Y軸で上下にずらす
+- Create a parent slot (e.g., `Flux`) and place each node under it
+- Positions become relative coordinates from the parent slot
+- Arrange so data flow goes from left to right
+- If there are branches, offset on Y-axis
 
-### 制限事項
+### Limitations
 
-一部の ProtoFlux ノードは追加できない場合があります：
-- 複雑なジェネリック制約を持つノード
-- 特殊な初期化が必要なノード
+Some ProtoFlux nodes cannot be added:
+- Nodes with complex generic constraints
+- Nodes requiring special initialization
 
-回避策：
-- Resonite 内で手動で ProtoFlux を作成
-- 既存の ProtoFlux をテンプレートとして複製
-- PackedObject として保存したものをインポート
+Workarounds:
+- Create ProtoFlux manually in Resonite
+- Duplicate existing ProtoFlux as a template
+- Import saved PackedObjects
 
-## デコンパイル検索 (CLI)
+## Decompile Search (CLI)
 
 ```bash
-# コンポーネント名で検索
+# Search by component name
 node dist/cli.js search --query Mesh
 
-# コンポーネント詳細を表示
+# Display component details
 node dist/cli.js info --name PBS_Metallic
 
-# カテゴリ一覧
+# List categories
 node dist/cli.js categories
 
-# カテゴリで検索
+# Search by category
 node dist/cli.js category --query "Materials"
 
-# メンバー名で検索
+# Search by member name
 node dist/cli.js member --query Smoothness
 
-# ソースコード全文検索
+# Full-text search source code
 node dist/cli.js grep --query "SyncPlayback"
 
-# ソースコード表示
+# Display source code
 node dist/cli.js source --name BoxMesh
 ```
 
-## サンプルスクリプト
+## Sample Scripts
 
 ```bash
-# ProtoFlux 1+1 を作成（ValueInput → ValueAdd → ValueDisplay）
+# Create ProtoFlux 1+1 (ValueInput → ValueAdd → ValueDisplay)
 node dist/scripts/create-flux-add.js ws://localhost:58971
 
-# 東京タワー（詳細版）を作成
+# Create Tokyo Tower (detailed version)
 node dist/scripts/create-tokyo-tower-detailed.js ws://localhost:58971
 
-# 東京スカイツリーを作成
+# Create Tokyo Skytree
 node dist/scripts/create-skytree.js ws://localhost:58971
 
-# 東京タワーを削除
+# Delete Tokyo Tower
 node dist/scripts/delete-tokyo-tower.js ws://localhost:58971
 
-# モダンハウス（内装付き）を作成
+# Create modern house (with interior)
 node dist/scripts/create-house3.js
 
-# 街を作成
+# Create town
 node dist/scripts/create-town.js
 
-# 雲を作成
+# Create clouds
 node dist/scripts/create-clouds.js
 
-# すべて削除して床だけにする
+# Delete everything and leave only the floor
 node dist/scripts/reset-to-floor.js
 ```
 

@@ -1,13 +1,13 @@
 /**
- * マルバツゲームにProtoFluxロジックを追加するスクリプト
+ * Script to add ProtoFlux logic to Tic-Tac-Toe game
  *
- * 使い方: npx tsx src/scripts/add-tictactoe-logic.ts [slotId] [ws://localhost:3343]
+ * Usage: npx tsx src/scripts/add-tictactoe-logic.ts [slotId] [ws://localhost:3343]
  *
- * 機能:
- * - 各セルクリックで○/×を配置
- * - ターン管理（○と×が交互）
- * - 二重クリック防止
- * - リセット機能
+ * Features:
+ * - Place O/X on each cell click
+ * - Turn management (alternating O and X)
+ * - Double-click prevention
+ * - Reset functionality
  */
 import { ResoniteLinkClient } from '../client.js';
 
@@ -22,7 +22,7 @@ async function main() {
     console.log('Adding game logic to TicTacToe...\n');
     console.log(`Target slot: ${SLOT_ID}`);
 
-    // 1. 既存のスロット構造を取得
+    // 1. Get existing slot structure
     const mainData = await client.getSlot({ slotId: SLOT_ID, depth: 4, includeComponentData: false });
     if (!mainData.success) throw new Error('TicTacToe slot not found');
 
@@ -38,7 +38,7 @@ async function main() {
     const resetButtonSlot = contentSlot.children?.find((c: any) => c.name === 'ResetButton');
     if (!resetButtonSlot?.id) throw new Error('ResetButton slot not found');
 
-    // セル情報を収集
+    // Collect cell information
     const cells: { row: number; col: number; slotId: string; textSlotId?: string }[] = [];
     for (const rowSlot of boardSlot.children || []) {
       const rowMatch = rowSlot.name?.value?.match(/Row(\d)/);
@@ -50,21 +50,21 @@ async function main() {
         if (!cellMatch) continue;
         const col = parseInt(cellMatch[2]);
 
-        // テキストスロットを探す
+        // Find text slot
         const textSlot = cellSlot.children?.find((c: any) => c.name === 'Text');
         cells.push({ row, col, slotId: cellSlot.id!, textSlotId: textSlot?.id });
       }
     }
     console.log(`  Found ${cells.length} cells`);
 
-    // 2. GameStateスロットを作成
+    // 2. Create GameState slot
     await client.addSlot({ parentId: SLOT_ID, name: 'GameState' });
     let slotData = await client.getSlot({ slotId: SLOT_ID, depth: 1 });
     const gameStateSlot = slotData.data?.children?.find((c: any) => c.name?.value === 'GameState');
     if (!gameStateSlot?.id) throw new Error('GameState slot not found');
     console.log(`  GameState slot: ${gameStateSlot.id}`);
 
-    // ValueField<bool> isOTurn を追加
+    // Add ValueField<bool> isOTurn
     await client.addComponent({
       containerSlotId: gameStateSlot.id,
       componentType: '[FrooxEngine]FrooxEngine.ValueField<bool>',
@@ -83,7 +83,7 @@ async function main() {
       console.log(`  isOTurn field: ${isOTurnField.id}`);
     }
 
-    // 各セル用のValueField<string>を追加
+    // Add ValueField<string> for each cell
     const cellFields: { row: number; col: number; fieldId: string }[] = [];
     for (const cell of cells) {
       await client.addComponent({
@@ -92,7 +92,7 @@ async function main() {
       });
     }
 
-    // 追加されたフィールドを取得
+    // Get added fields
     gameStateData = await client.getSlot({ slotId: gameStateSlot.id, includeComponentData: true });
     const stringFields = gameStateData.data?.components?.filter((c: any) =>
       c.componentType?.includes('ValueField') && c.componentType?.includes('string')
@@ -107,7 +107,7 @@ async function main() {
     }
     console.log(`  Created ${cellFields.length} cell state fields`);
 
-    // 3. 各セルにButtonDynamicImpulseTriggerを追加
+    // 3. Add ButtonDynamicImpulseTrigger to each cell
     for (const cell of cells) {
       await client.addComponent({
         containerSlotId: cell.slotId,
@@ -130,7 +130,7 @@ async function main() {
     }
     console.log('  Added ButtonDynamicImpulseTrigger to all cells');
 
-    // リセットボタンにもトリガー追加
+    // Add trigger to reset button too
     await client.addComponent({
       containerSlotId: resetButtonSlot.id,
       componentType: '[FrooxEngine]FrooxEngine.ButtonDynamicImpulseTrigger',
@@ -149,26 +149,26 @@ async function main() {
     }
     console.log('  Added reset trigger');
 
-    // 4. ValueFieldDriveでセルテキストをドライブ
+    // 4. Drive cell text with ValueFieldDrive
     for (let i = 0; i < cells.length; i++) {
       const cell = cells[i];
       const field = cellFields[i];
       if (!cell.textSlotId || !field) continue;
 
-      // テキストスロットのTextコンポーネントを取得
+      // Get Text component from text slot
       const textData = await client.getSlot({ slotId: cell.textSlotId, includeComponentData: true });
       const textComp = textData.data?.components?.find((c: any) =>
         c.componentType?.includes('Text') && !c.componentType?.includes('TextField')
       );
 
       if (textComp?.id) {
-        // ValueFieldDriveを追加してContentをドライブ
+        // Add ValueFieldDrive to drive Content
         await client.addComponent({
           containerSlotId: gameStateSlot.id,
           componentType: '[FrooxEngine]FrooxEngine.ValueFieldDrive<string>',
         });
 
-        // 追加されたドライブを取得
+        // Get added drive
         const gsData = await client.getSlot({ slotId: gameStateSlot.id, includeComponentData: true });
         const drives = gsData.data?.components?.filter((c: any) =>
           c.componentType?.includes('ValueFieldDrive')
@@ -176,11 +176,11 @@ async function main() {
         const drive = drives[drives.length - 1];
 
         if (drive?.id) {
-          // Textコンポーネントの詳細を取得してContentフィールドIDを得る
+          // Get Text component details to get Content field ID
           const textDetails = await client.getComponent(textComp.id);
           const contentFieldId = textDetails.data?.members?.Content?.id;
 
-          // ドライブを設定
+          // Set up drive
           const driveDetails = await client.getComponent(drive.id);
           await client.updateComponent({
             id: drive.id,
@@ -194,21 +194,21 @@ async function main() {
     }
     console.log('  Connected cell fields to Text components');
 
-    // 5. ターン表示用のドライブ設定
+    // 5. Set up drive for turn display
     const turnData = await client.getSlot({ slotId: turnDisplaySlot.id, includeComponentData: true });
     const turnTextComp = turnData.data?.components?.find((c: any) =>
       c.componentType?.includes('Text') && !c.componentType?.includes('TextField')
     );
     console.log(`  TurnDisplay text component: ${turnTextComp?.id}`);
 
-    // 6. ProtoFluxスロットを作成
+    // 6. Create ProtoFlux slot
     await client.addSlot({ parentId: SLOT_ID, name: 'Flux' });
     slotData = await client.getSlot({ slotId: SLOT_ID, depth: 1 });
     const fluxSlot = slotData.data?.children?.find((c: any) => c.name?.value === 'Flux');
     if (!fluxSlot?.id) throw new Error('Flux slot not found');
     console.log(`  Flux slot: ${fluxSlot.id}`);
 
-    // 各セル用のProtoFluxを作成
+    // Create ProtoFlux for each cell
     for (let i = 0; i < cells.length; i++) {
       const cell = cells[i];
       const field = cellFields[i];
@@ -218,7 +218,7 @@ async function main() {
       const xPos = (cell.col - 1) * 0.4;
       const yPos = (1 - cell.row) * 0.3;
 
-      // セル処理用スロット
+      // Cell processing slot
       await client.addSlot({
         parentId: fluxSlot.id,
         name: nodeName,
@@ -236,21 +236,21 @@ async function main() {
         position: { x: 0, y: 0, z: 0 },
       });
 
-      // ValueFieldWrite (セル状態)
+      // ValueFieldWrite (cell state)
       await client.addSlot({
         parentId: cellFluxSlot.id,
         name: 'Write',
         position: { x: 0.15, y: 0, z: 0 },
       });
 
-      // If (空セルチェック)
+      // If (empty cell check)
       await client.addSlot({
         parentId: cellFluxSlot.id,
         name: 'IfEmpty',
         position: { x: 0.08, y: 0, z: 0 },
       });
 
-      // Conditional (○か×か)
+      // Conditional (O or X)
       await client.addSlot({
         parentId: cellFluxSlot.id,
         name: 'Conditional',
@@ -273,19 +273,19 @@ async function main() {
 
       if (!receiverSlot?.id || !writeSlot?.id || !ifEmptySlot?.id || !conditionalSlot?.id || !turnToggleSlot?.id) continue;
 
-      // DynamicImpulseReceiver追加
+      // Add DynamicImpulseReceiver
       await client.addComponent({
         containerSlotId: receiverSlot.id,
         componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Actions.DynamicImpulseReceiver',
       });
 
-      // If追加
+      // Add If
       await client.addComponent({
         containerSlotId: ifEmptySlot.id,
         componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Flow.If',
       });
 
-      // ValueEquals<string>追加 (空文字チェック)
+      // Add ValueEquals<string> (empty string check)
       await client.addSlot({
         parentId: cellFluxSlot.id,
         name: 'IsEmpty',
@@ -301,7 +301,7 @@ async function main() {
         });
       }
 
-      // ValueFieldRead追加 (セル状態読み取り)
+      // Add ValueFieldRead (read cell state)
       await client.addSlot({
         parentId: cellFluxSlot.id,
         name: 'ReadCell',
@@ -317,26 +317,26 @@ async function main() {
         });
       }
 
-      // ValueFieldWrite<string>追加
+      // Add ValueFieldWrite<string>
       await client.addComponent({
         containerSlotId: writeSlot.id,
         componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Variables.WriteValueField<string>',
       });
 
-      // Conditional<string>追加 (○か×か選択)
+      // Add Conditional<string> (select O or X)
       await client.addComponent({
         containerSlotId: conditionalSlot.id,
         componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators.Conditional<string>',
       });
 
-      // ValueInput<string> ○
+      // ValueInput<string> O
       await client.addSlot({
         parentId: cellFluxSlot.id,
         name: 'SymbolO',
         position: { x: 0.1, y: 0.12, z: 0 },
       });
 
-      // ValueInput<string> ×
+      // ValueInput<string> X
       await client.addSlot({
         parentId: cellFluxSlot.id,
         name: 'SymbolX',
@@ -361,7 +361,7 @@ async function main() {
         });
       }
 
-      // ReadTurn (isOTurn読み取り)
+      // ReadTurn (read isOTurn)
       await client.addSlot({
         parentId: cellFluxSlot.id,
         name: 'ReadTurn',
@@ -377,13 +377,13 @@ async function main() {
         });
       }
 
-      // WriteValueField<bool> (ターントグル)
+      // WriteValueField<bool> (turn toggle)
       await client.addComponent({
         containerSlotId: turnToggleSlot.id,
         componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Variables.WriteValueField<bool>',
       });
 
-      // Not追加 (ターン反転)
+      // Add Not (invert turn)
       await client.addSlot({
         parentId: cellFluxSlot.id,
         name: 'Not',
@@ -399,7 +399,7 @@ async function main() {
         });
       }
 
-      // EmptyString追加
+      // Add EmptyString
       await client.addSlot({
         parentId: cellFluxSlot.id,
         name: 'EmptyStr',
@@ -415,7 +415,7 @@ async function main() {
         });
       }
 
-      // GlobalValueField参照用
+      // GlobalValueField reference
       await client.addSlot({
         parentId: cellFluxSlot.id,
         name: 'CellFieldRef',
@@ -448,7 +448,7 @@ async function main() {
       console.log(`  Created flux for ${nodeName}`);
     }
 
-    // 7. リセット用ProtoFlux
+    // 7. Reset ProtoFlux
     await client.addSlot({
       parentId: fluxSlot.id,
       name: 'Reset',
@@ -473,26 +473,26 @@ async function main() {
     console.log('  Created reset flux');
 
     console.log('\n=== Game Logic Added! ===');
-    console.log('\n注意: ProtoFluxノードの接続は手動で行う必要があります。');
-    console.log('以下の接続を行ってください:');
+    console.log('\nNote: ProtoFlux node connections must be done manually.');
+    console.log('Please make the following connections:');
     console.log('');
-    console.log('各セル (Cell_X_Y):');
-    console.log('  1. DynamicImpulseReceiverのTagに対応するタグを設定');
-    console.log('  2. Receiver → IfEmpty (空チェック)');
-    console.log('  3. ReadCell → IsEmpty.A (セル状態読み取り)');
-    console.log('  4. EmptyStr → IsEmpty.B (空文字)');
-    console.log('  5. IsEmpty → IfEmpty.Condition');
-    console.log('  6. IfEmpty.True → Write (セル書き込み)');
-    console.log('  7. ReadTurn → Conditional.Condition');
-    console.log('  8. SymbolO ("○") → Conditional.OnTrue');
-    console.log('  9. SymbolX ("×") → Conditional.OnFalse');
-    console.log('  10. Conditional → Write.Value');
-    console.log('  11. Write → TurnToggle');
-    console.log('  12. ReadTurn → Not → TurnToggle.Value');
+    console.log('Each cell (Cell_X_Y):');
+    console.log('  1. Set the corresponding tag for DynamicImpulseReceiver');
+    console.log('  2. Receiver -> IfEmpty (empty check)');
+    console.log('  3. ReadCell -> IsEmpty.A (read cell state)');
+    console.log('  4. EmptyStr -> IsEmpty.B (empty string)');
+    console.log('  5. IsEmpty -> IfEmpty.Condition');
+    console.log('  6. IfEmpty.True -> Write (write to cell)');
+    console.log('  7. ReadTurn -> Conditional.Condition');
+    console.log('  8. SymbolO ("O") -> Conditional.OnTrue');
+    console.log('  9. SymbolX ("X") -> Conditional.OnFalse');
+    console.log('  10. Conditional -> Write.Value');
+    console.log('  11. Write -> TurnToggle');
+    console.log('  12. ReadTurn -> Not -> TurnToggle.Value');
     console.log('');
-    console.log('リセット:');
-    console.log('  - 各セルのValueFieldを空文字にクリア');
-    console.log('  - isOTurnをtrueに戻す');
+    console.log('Reset:');
+    console.log('  - Clear all cell ValueFields to empty string');
+    console.log('  - Reset isOTurn to true');
 
   } finally {
     client.disconnect();

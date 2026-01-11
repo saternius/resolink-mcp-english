@@ -1,7 +1,7 @@
 /**
- * UIX マルバツゲーム作成スクリプト
+ * UIX Tic-Tac-Toe Game Creation Script
  *
- * 使い方: npx tsx src/scripts/create-tic-tac-toe.ts [ws://localhost:3343]
+ * Usage: npx tsx src/scripts/create-tic-tac-toe.ts [ws://localhost:3343]
  */
 import { ResoniteLinkClient } from '../client.js';
 
@@ -14,7 +14,7 @@ async function main() {
   try {
     console.log('Creating Tic-Tac-Toe Game...\n');
 
-    // 1. メインスロット作成
+    // 1. Create main slot
     const slotName = `TicTacToe_${Date.now()}`;
     await client.addSlot({
       name: slotName,
@@ -27,13 +27,13 @@ async function main() {
     const mainId = mainSlot.id;
     console.log(`  Main slot: ${mainId}`);
 
-    // スケールを0.001に設定
+    // Set scale to 0.001
     await client.updateSlot({
       id: mainId,
       scale: { x: 0.001, y: 0.001, z: 0.001 },
     });
 
-    // 2. Canvas + Grabbable追加
+    // 2. Add Canvas + Grabbable
     await client.addComponent({
       containerSlotId: mainId,
       componentType: '[FrooxEngine]FrooxEngine.UIX.Canvas',
@@ -43,7 +43,7 @@ async function main() {
       componentType: '[FrooxEngine]FrooxEngine.Grabbable',
     });
 
-    // UI_UnlitMaterial追加（Image描画用）
+    // Add UI_UnlitMaterial (for Image rendering)
     await client.addComponent({
       containerSlotId: mainId,
       componentType: '[FrooxEngine]FrooxEngine.UI_UnlitMaterial',
@@ -62,7 +62,7 @@ async function main() {
       });
     }
 
-    // UI_UnlitMaterial設定
+    // UI_UnlitMaterial settings
     if (uiMaterial?.id) {
       await client.updateComponent({
         id: uiMaterial.id,
@@ -76,7 +76,7 @@ async function main() {
     }
     console.log('  Canvas configured');
 
-    // 3. 背景スロット作成
+    // 3. Create background slot
     await client.addSlot({ parentId: mainId, name: 'Background' });
     slotData = await client.getSlot({ slotId: mainId, depth: 1 });
     const bgSlot = slotData.data?.children?.find((c: any) => c.name?.value === 'Background');
@@ -111,7 +111,7 @@ async function main() {
     }
     console.log('  Background created');
 
-    // 4. コンテンツスロット（VerticalLayout）
+    // 4. Content slot (VerticalLayout)
     await client.addSlot({ parentId: mainId, name: 'Content' });
     slotData = await client.getSlot({ slotId: mainId, depth: 1 });
     const contentSlot = slotData.data?.children?.find((c: any) => c.name?.value === 'Content');
@@ -149,7 +149,7 @@ async function main() {
     }
     console.log('  Content layout created');
 
-    // 5. ヘッダー
+    // 5. Header
     await client.addSlot({ parentId: contentId, name: 'Header' });
     contentData = await client.getSlot({ slotId: contentId, depth: 1 });
     const headerSlot = contentData.data?.children?.find((c: any) => c.name?.value === 'Header');
@@ -173,7 +173,7 @@ async function main() {
       await client.updateComponent({
         id: headerText.id,
         members: {
-          Content: { $type: 'string', value: '○×ゲーム' },
+          Content: { $type: 'string', value: 'Tic-Tac-Toe' },
           Size: { $type: 'float', value: 36 },
           Color: { $type: 'colorX', value: { r: 1, g: 1, b: 1, a: 1 } },
           HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -182,7 +182,7 @@ async function main() {
     }
     console.log('  Header created');
 
-    // 6. ターン表示
+    // 6. Turn display
     await client.addSlot({ parentId: contentId, name: 'TurnDisplay' });
     contentData = await client.getSlot({ slotId: contentId, depth: 1 });
     const turnSlot = contentData.data?.children?.find((c: any) => c.name?.value === 'TurnDisplay');
@@ -206,7 +206,7 @@ async function main() {
       await client.updateComponent({
         id: turnText.id,
         members: {
-          Content: { $type: 'string', value: '○ の番' },
+          Content: { $type: 'string', value: "O's Turn" },
           Size: { $type: 'float', value: 24 },
           Color: { $type: 'colorX', value: { r: 0.5, g: 0.8, b: 1, a: 1 } },
           HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -215,7 +215,7 @@ async function main() {
     }
     console.log('  Turn display created');
 
-    // 7. ゲームボード（3x3グリッド）
+    // 7. Game board (3x3 grid)
     await client.addSlot({ parentId: contentId, name: 'Board' });
     contentData = await client.getSlot({ slotId: contentId, depth: 1 });
     const boardSlot = contentData.data?.children?.find((c: any) => c.name?.value === 'Board');
@@ -248,7 +248,7 @@ async function main() {
       });
     }
 
-    // 3行作成
+    // Create 3 rows
     const cellIds: string[][] = [];
     for (let row = 0; row < 3; row++) {
       const rowName = `Row${row}`;
@@ -282,7 +282,7 @@ async function main() {
         });
       }
 
-      // 3列（セル）作成
+      // Create 3 columns (cells)
       const rowCellIds: string[] = [];
       for (let col = 0; col < 3; col++) {
         const cellName = `Cell_${row}_${col}`;
@@ -318,7 +318,7 @@ async function main() {
           });
         }
 
-        // セル内のテキスト用スロット
+        // Slot for text inside cell
         await client.addSlot({ parentId: cellSlot.id, name: 'Text' });
         cellData = await client.getSlot({ slotId: cellSlot.id, depth: 1 });
         const textSlot = cellData.data?.children?.find((c: any) => c.name?.value === 'Text');
@@ -360,7 +360,7 @@ async function main() {
     }
     console.log('  Game board created (3x3)');
 
-    // 8. リセットボタン
+    // 8. Reset button
     await client.addSlot({ parentId: contentId, name: 'ResetButton' });
     contentData = await client.getSlot({ slotId: contentId, depth: 1 });
     const resetSlot = contentData.data?.children?.find((c: any) => c.name?.value === 'ResetButton');
@@ -390,7 +390,7 @@ async function main() {
       });
     }
 
-    // リセットボタンテキスト
+    // Reset button text
     await client.addSlot({ parentId: resetSlot.id, name: 'Text' });
     resetData = await client.getSlot({ slotId: resetSlot.id, depth: 1 });
     const resetTextSlot = resetData.data?.children?.find((c: any) => c.name?.value === 'Text');
@@ -417,7 +417,7 @@ async function main() {
         await client.updateComponent({
           id: resetText.id,
           members: {
-            Content: { $type: 'string', value: 'リセット' },
+            Content: { $type: 'string', value: 'Reset' },
             Size: { $type: 'float', value: 22 },
             Color: { $type: 'colorX', value: { r: 1, g: 1, b: 1, a: 1 } },
             HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -430,9 +430,9 @@ async function main() {
 
     console.log('\n=== Tic-Tac-Toe Game Created! ===');
     console.log(`  Location: ${slotName}`);
-    console.log('\n  Note: ゲームロジック（ターン管理・勝敗判定）は');
-    console.log('        ProtoFluxで追加実装が必要です。');
-    console.log('        現在はUIのみ作成されています。');
+    console.log('\n  Note: Game logic (turn management, win detection)');
+    console.log('        needs to be implemented with ProtoFlux.');
+    console.log('        Currently only the UI is created.');
 
   } finally {
     client.disconnect();

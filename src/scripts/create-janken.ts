@@ -1,19 +1,19 @@
 /**
- * じゃんけんゲーム作成スクリプト（動作確認済み版）
- * UIX + ProtoFlux でじゃんけんゲームを構築
+ * Rock-Paper-Scissors Game Creation Script (Verified Working Version)
+ * Build a Rock-Paper-Scissors game with UIX + ProtoFlux
  *
- * 各ボタンに対して：
- * 1. プレイヤーの手を表示
- * 2. CPUの手をランダム生成
- * 3. 結果を計算して表示
+ * For each button:
+ * 1. Display player's move
+ * 2. Generate CPU's random move
+ * 3. Calculate and display result
  *
- * 使い方: npx tsx src/scripts/create-janken.ts [ws://localhost:33333]
+ * Usage: npx tsx src/scripts/create-janken.ts [ws://localhost:33333]
  */
 import { ResoniteLinkClient } from '../client.js';
 
 const WS_URL = process.argv[2] || 'ws://localhost:33333';
 
-// ヘルパー: コンポーネントを探す
+// Helper: Find component
 function findComponent(data: any, typeIncludes: string, exclude?: string) {
   return data?.components?.find((c: any) => {
     const typeStr = c.type || c.componentType || '';
@@ -23,7 +23,7 @@ function findComponent(data: any, typeIncludes: string, exclude?: string) {
   });
 }
 
-// ヘルパー: 複数のコンポーネントを探す
+// Helper: Find multiple components
 function findComponents(data: any, typeIncludes: string, exclude?: string) {
   return data?.components?.filter((c: any) => {
     const typeStr = c.type || c.componentType || '';
@@ -33,7 +33,7 @@ function findComponents(data: any, typeIncludes: string, exclude?: string) {
   }) || [];
 }
 
-// ヘルパー: スロットIDを取得
+// Helper: Get slot ID
 async function getChildSlotId(client: ResoniteLinkClient, parentId: string, name: string): Promise<string> {
   const data = await client.getSlot({ slotId: parentId, depth: 1 });
   const child = data.data?.children?.find((c: any) => c.name?.value === name);
@@ -48,7 +48,7 @@ async function main() {
   try {
     console.log('Creating Janken (Rock-Paper-Scissors) Game...\n');
 
-    // ========== 1. メインスロット作成 ==========
+    // ========== 1. Create main slot ==========
     const slotName = `JankenGame_${Date.now()}`;
     await client.addSlot({
       name: slotName,
@@ -61,7 +61,7 @@ async function main() {
     const mainId = mainSlot.id;
     console.log(`Main slot: ${mainId}`);
 
-    // UIXスケール設定
+    // UIX scale setting
     await client.updateSlot({
       id: mainId,
       scale: { x: 0.001, y: 0.001, z: 0.001 },
@@ -95,7 +95,7 @@ async function main() {
     }
     console.log('  Canvas created');
 
-    // ========== 3. GameState スロット ==========
+    // ========== 3. GameState slot ==========
     await client.addSlot({ parentId: mainId, name: 'GameState' });
     const gameStateId = await getChildSlotId(client, mainId, 'GameState');
 
@@ -113,7 +113,7 @@ async function main() {
     const resultTextField = stringFields[2];
     const cpuRandomField = intFields[0];
 
-    // 初期値設定
+    // Initial value settings
     if (playerHandField?.id) {
       await client.updateComponent({ id: playerHandField.id, members: { Value: { $type: 'string', value: '❓' } } as any });
     }
@@ -121,14 +121,14 @@ async function main() {
       await client.updateComponent({ id: cpuHandField.id, members: { Value: { $type: 'string', value: '❓' } } as any });
     }
     if (resultTextField?.id) {
-      await client.updateComponent({ id: resultTextField.id, members: { Value: { $type: 'string', value: '手を選んでね！' } } as any });
+      await client.updateComponent({ id: resultTextField.id, members: { Value: { $type: 'string', value: 'Choose your move!' } } as any });
     }
     if (cpuRandomField?.id) {
       await client.updateComponent({ id: cpuRandomField.id, members: { Value: { $type: 'int', value: 0 } } as any });
     }
     console.log(`  GameState fields created`);
 
-    // ========== 4. 背景 ==========
+    // ========== 4. Background ==========
     await client.addSlot({ parentId: mainId, name: 'Background' });
     const bgId = await getChildSlotId(client, mainId, 'Background');
 
@@ -214,7 +214,7 @@ async function main() {
       await client.updateComponent({
         id: headerText.id,
         members: {
-          Content: { $type: 'string', value: 'じゃんけん' },
+          Content: { $type: 'string', value: 'Rock-Paper-Scissors' },
           Size: { $type: 'float', value: 32 },
           Color: { $type: 'colorX', value: { r: 1, g: 1, b: 1, a: 1 } },
           HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -223,7 +223,7 @@ async function main() {
     }
     console.log('  Header created');
 
-    // ========== 7. HandsDisplay (対戦表示) ==========
+    // ========== 7. HandsDisplay (Battle display) ==========
     await client.addSlot({ parentId: contentId, name: 'HandsDisplay' });
     const handsDisplayId = await getChildSlotId(client, contentId, 'HandsDisplay');
 
@@ -368,7 +368,7 @@ async function main() {
       await client.updateComponent({
         id: resultTextComp.id,
         members: {
-          Content: { $type: 'string', value: '手を選んでね！' },
+          Content: { $type: 'string', value: 'Choose your move!' },
           Size: { $type: 'float', value: 26 },
           Color: { $type: 'colorX', value: { r: 0.9, g: 0.9, b: 0.9, a: 1 } },
           HorizontalAlign: { $type: 'enum', value: 'Center', enumType: 'TextHorizontalAlignment' },
@@ -406,7 +406,7 @@ async function main() {
       });
     }
 
-    // ボタン作成関数
+    // Button creation function
     const createButton = async (name: string, label: string, tag: string, color: { r: number; g: number; b: number }) => {
       await client.addSlot({ parentId: buttonsId, name });
       const btnId = await getChildSlotId(client, buttonsId, name);
@@ -444,7 +444,7 @@ async function main() {
         });
       }
 
-      // ボタンテキスト
+      // Button text
       await client.addSlot({ parentId: btnId, name: 'Text' });
       const textSlotId = await getChildSlotId(client, btnId, 'Text');
 
@@ -480,13 +480,13 @@ async function main() {
       return btnId;
     };
 
-    // 3つのボタンを作成
-    await createButton('RockButton', 'グー', 'Janken_Rock', { r: 0.6, g: 0.3, b: 0.3 });
-    await createButton('ScissorsButton', 'チョキ', 'Janken_Scissors', { r: 0.3, g: 0.5, b: 0.3 });
-    await createButton('PaperButton', 'パー', 'Janken_Paper', { r: 0.3, g: 0.3, b: 0.6 });
+    // Create 3 buttons
+    await createButton('RockButton', 'Rock', 'Janken_Rock', { r: 0.6, g: 0.3, b: 0.3 });
+    await createButton('ScissorsButton', 'Scissors', 'Janken_Scissors', { r: 0.3, g: 0.5, b: 0.3 });
+    await createButton('PaperButton', 'Paper', 'Janken_Paper', { r: 0.3, g: 0.3, b: 0.6 });
     console.log('  Buttons created (Rock, Scissors, Paper)');
 
-    // ========== 10. ValueDriver でテキストをドライブ ==========
+    // ========== 10. Drive text with ValueDriver ==========
     // PlayerHand Text ← playerHandField
     if (playerHandField?.id && playerHandText?.id) {
       await client.addComponent({
@@ -572,28 +572,28 @@ async function main() {
     }
     console.log('  ValueDrivers connected');
 
-    // ========== 11. ProtoFlux (完全版: プレイヤーの手 + CPUのランダム手 + 結果判定) ==========
+    // ========== 11. ProtoFlux (Full version: Player's move + CPU's random move + Result determination) ==========
     await client.addSlot({ parentId: mainId, name: 'Flux' });
     const fluxId = await getChildSlotId(client, mainId, 'Flux');
 
-    // 手の配列: 0=グー, 1=チョキ, 2=パー
-    const hands = ['グー', 'チョキ', 'パー'];
+    // Moves array: 0=Rock, 1=Scissors, 2=Paper
+    const hands = ['Rock', 'Scissors', 'Paper'];
     const handTags = ['Janken_Rock', 'Janken_Scissors', 'Janken_Paper'];
 
-    // 勝敗テーブル: resultTable[playerIdx][cpuIdx]
-    // グー(0)がチョキ(1)に勝ち、チョキ(1)がパー(2)に勝ち、パー(2)がグー(0)に勝ち
+    // Result table: resultTable[playerIdx][cpuIdx]
+    // Rock(0) beats Scissors(1), Scissors(1) beats Paper(2), Paper(2) beats Rock(0)
     const resultTable = [
-      ['あいこ！', '勝ち！🎉', '負け...'],   // プレイヤーがグー: CPU=グー→あいこ, CPU=チョキ→勝ち, CPU=パー→負け
-      ['負け...', 'あいこ！', '勝ち！🎉'],   // プレイヤーがチョキ: CPU=グー→負け, CPU=チョキ→あいこ, CPU=パー→勝ち
-      ['勝ち！🎉', '負け...', 'あいこ！'],   // プレイヤーがパー: CPU=グー→勝ち, CPU=チョキ→負け, CPU=パー→あいこ
+      ['Draw!', 'You Win!', 'You Lose...'],   // Player=Rock: CPU=Rock->Draw, CPU=Scissors->Win, CPU=Paper->Lose
+      ['You Lose...', 'Draw!', 'You Win!'],   // Player=Scissors: CPU=Rock->Lose, CPU=Scissors->Draw, CPU=Paper->Win
+      ['You Win!', 'You Lose...', 'Draw!'],   // Player=Paper: CPU=Rock->Win, CPU=Scissors->Lose, CPU=Paper->Draw
     ];
 
-    // 各手用のProtoFluxロジック
+    // ProtoFlux logic for each move
     for (let playerHandIdx = 0; playerHandIdx < 3; playerHandIdx++) {
       const handName = handTags[playerHandIdx].replace('Janken_', '');
       const playerHandEmoji = hands[playerHandIdx];
 
-      // 各手用のProtoFluxスロット
+      // ProtoFlux slot for each move
       await client.addSlot({
         parentId: fluxId,
         name: `${handName}Logic`,
@@ -601,14 +601,14 @@ async function main() {
       });
       const logicId = await getChildSlotId(client, fluxId, `${handName}Logic`);
 
-      // ノード用スロット作成
+      // Create slots for nodes
       await client.addSlot({ parentId: logicId, name: 'Receiver' });
       await client.addSlot({ parentId: logicId, name: 'TagInput' });
       await client.addSlot({ parentId: logicId, name: 'PlayerHandInput' });
       await client.addSlot({ parentId: logicId, name: 'PlayerWrite' });
       await client.addSlot({ parentId: logicId, name: 'Random' });
-      await client.addSlot({ parentId: logicId, name: 'RandomWrite' });  // ランダム値を保存
-      await client.addSlot({ parentId: logicId, name: 'RandomSource' }); // 保存された値を読み取り
+      await client.addSlot({ parentId: logicId, name: 'RandomWrite' });  // Save random value
+      await client.addSlot({ parentId: logicId, name: 'RandomSource' }); // Read saved value
       await client.addSlot({ parentId: logicId, name: 'CpuHand0' });
       await client.addSlot({ parentId: logicId, name: 'CpuHand1' });
       await client.addSlot({ parentId: logicId, name: 'CpuHand2' });
@@ -653,12 +653,12 @@ async function main() {
       const const0SlotId = getNodeSlotId('Const0');
       const const1SlotId = getNodeSlotId('Const1');
 
-      // コンポーネント追加
+      // Add components
       // DynamicImpulseReceiver
       await client.addComponent({ containerSlotId: receiverSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Actions.DynamicImpulseReceiver' });
       // GlobalValue<string> for Tag
       await client.addComponent({ containerSlotId: tagInputSlotId, componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalValue<string>' });
-      // プレーヤーの手入力
+      // Player's hand input
       await client.addComponent({ containerSlotId: playerHandInputSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueObjectInput<string>' });
       
       // PlayerWrite: ObjectValueSource + GlobalReference + ObjectWrite
@@ -671,26 +671,26 @@ async function main() {
       await client.addComponent({ containerSlotId: randomSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueInput<int>' });
       await client.addComponent({ containerSlotId: randomSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueInput<int>' });
 
-      // RandomWrite: ランダム値をValueField<int>に保存
+      // RandomWrite: Save random value to ValueField<int>
       await client.addComponent({ containerSlotId: randomWriteSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueSource<int>' });
       await client.addComponent({ containerSlotId: randomWriteSlotId, componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalReference<[FrooxEngine]FrooxEngine.IValue<int>>' });
       await client.addComponent({ containerSlotId: randomWriteSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueWrite<[FrooxEngine]FrooxEngine.ProtoFlux.FrooxEngineContext,int>' });
 
-      // RandomSource: 保存されたランダム値を読み取り
+      // RandomSource: Read saved random value
       await client.addComponent({ containerSlotId: randomSourceSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ValueSource<int>' });
       await client.addComponent({ containerSlotId: randomSourceSlotId, componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalReference<[FrooxEngine]FrooxEngine.IValue<int>>' });
 
-      // CPU手の入力（3つ）
+      // CPU move inputs (3)
       await client.addComponent({ containerSlotId: cpuHand0SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueObjectInput<string>' });
       await client.addComponent({ containerSlotId: cpuHand1SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueObjectInput<string>' });
       await client.addComponent({ containerSlotId: cpuHand2SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueObjectInput<string>' });
 
-      // 結果の入力（3つ）
+      // Result inputs (3)
       await client.addComponent({ containerSlotId: result0SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueObjectInput<string>' });
       await client.addComponent({ containerSlotId: result1SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueObjectInput<string>' });
       await client.addComponent({ containerSlotId: result2SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueObjectInput<string>' });
 
-      // 比較用の定数 (0, 1)
+      // Constants for comparison (0, 1)
       await client.addComponent({ containerSlotId: const0SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueInput<int>' });
       await client.addComponent({ containerSlotId: const1SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueInput<int>' });
 
@@ -698,11 +698,11 @@ async function main() {
       await client.addComponent({ containerSlotId: equals0SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueEquals<int>' });
       await client.addComponent({ containerSlotId: equals1SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ValueEquals<int>' });
 
-      // ObjectConditional (CPU手選択)
+      // ObjectConditional (CPU move selection)
       await client.addComponent({ containerSlotId: cond0SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectConditional<string>' });
       await client.addComponent({ containerSlotId: cond1SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectConditional<string>' });
 
-      // ObjectConditional (結果選択)
+      // ObjectConditional (Result selection)
       await client.addComponent({ containerSlotId: condResult0SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectConditional<string>' });
       await client.addComponent({ containerSlotId: condResult1SlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectConditional<string>' });
 
@@ -716,10 +716,10 @@ async function main() {
       await client.addComponent({ containerSlotId: resultWriteSlotId, componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalReference<[FrooxEngine]FrooxEngine.IValue<string>>' });
       await client.addComponent({ containerSlotId: resultWriteSlotId, componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectWrite<[FrooxEngine]FrooxEngine.ProtoFlux.FrooxEngineContext,string>' });
 
-      // 少し待ってからコンポーネント取得
+      // Wait a moment then get components
       await new Promise(resolve => setTimeout(resolve, 150));
 
-      // コンポーネント取得
+      // Get components
       const getComp = async (slotId: string, typeIncludes: string) => {
         const data = await client.getSlot({ slotId, includeComponentData: true });
         return findComponent(data.data, typeIncludes);
@@ -739,12 +739,12 @@ async function main() {
       const randomComp = await getComp(randomSlotId, 'RandomInt');
       const randomInputs = await getComps(randomSlotId, 'ValueInput');
 
-      // RandomWrite のコンポーネント取得
+      // Get RandomWrite components
       const randomWriteSource = await getComp(randomWriteSlotId, 'ValueSource');
       const randomWriteGlobalRef = await getComp(randomWriteSlotId, 'GlobalReference');
       const randomWriteComp = await getComp(randomWriteSlotId, 'ValueWrite');
 
-      // RandomSource のコンポーネント取得
+      // Get RandomSource components
       const randomSourceComp = await getComp(randomSourceSlotId, 'ValueSource');
       const randomSourceGlobalRef = await getComp(randomSourceSlotId, 'GlobalReference');
       
@@ -776,8 +776,8 @@ async function main() {
       const resultGlobalRef = await getComp(resultWriteSlotId, 'GlobalReference');
       const resultWrite = await getComp(resultWriteSlotId, 'ObjectWrite');
 
-      // === 値設定 ===
-      // Tag設定
+      // === Value settings ===
+      // Tag setting
       if (tagInputComp?.id) {
         await client.updateComponent({ id: tagInputComp.id, members: { Value: { $type: 'string', value: handTags[playerHandIdx] } } as any });
       }
@@ -788,12 +788,12 @@ async function main() {
         });
       }
 
-      // プレーヤーの手入力
+      // Player's move input
       if (playerHandInputComp?.id) {
         await client.updateComponent({ id: playerHandInputComp.id, members: { Value: { $type: 'string', value: playerHandEmoji } } as any });
       }
 
-      // Random範囲: min=0, max=3
+      // Random range: min=0, max=3
       if (randomInputs[0]?.id) {
         await client.updateComponent({ id: randomInputs[0].id, members: { Value: { $type: 'int', value: 0 } } as any });
       }
@@ -810,7 +810,7 @@ async function main() {
         });
       }
 
-      // === RandomWrite 設定: ランダム値をcpuRandomFieldに保存 ===
+      // === RandomWrite setting: Save random value to cpuRandomField ===
       if (cpuRandomField?.id && randomWriteGlobalRef?.id) {
         const fieldDetails = await client.getComponent(cpuRandomField.id);
         const valueId = fieldDetails.data?.members?.Value?.id;
@@ -837,7 +837,7 @@ async function main() {
         });
       }
 
-      // === RandomSource 設定: 保存されたランダム値を読み取り ===
+      // === RandomSource setting: Read saved random value ===
       if (cpuRandomField?.id && randomSourceGlobalRef?.id) {
         const fieldDetails = await client.getComponent(cpuRandomField.id);
         const valueId = fieldDetails.data?.members?.Value?.id;
@@ -855,22 +855,22 @@ async function main() {
         });
       }
 
-      // CPU手の文字列設定
+      // CPU move string settings
       if (cpuHand0Comp?.id) await client.updateComponent({ id: cpuHand0Comp.id, members: { Value: { $type: 'string', value: hands[0] } } as any });
       if (cpuHand1Comp?.id) await client.updateComponent({ id: cpuHand1Comp.id, members: { Value: { $type: 'string', value: hands[1] } } as any });
       if (cpuHand2Comp?.id) await client.updateComponent({ id: cpuHand2Comp.id, members: { Value: { $type: 'string', value: hands[2] } } as any });
 
-      // 結果の文字列設定
+      // Result string settings
       if (result0Comp?.id) await client.updateComponent({ id: result0Comp.id, members: { Value: { $type: 'string', value: resultTable[playerHandIdx][0] } } as any });
       if (result1Comp?.id) await client.updateComponent({ id: result1Comp.id, members: { Value: { $type: 'string', value: resultTable[playerHandIdx][1] } } as any });
       if (result2Comp?.id) await client.updateComponent({ id: result2Comp.id, members: { Value: { $type: 'string', value: resultTable[playerHandIdx][2] } } as any });
 
-      // 定数設定
+      // Constant settings
       if (const0Comp?.id) await client.updateComponent({ id: const0Comp.id, members: { Value: { $type: 'int', value: 0 } } as any });
       if (const1Comp?.id) await client.updateComponent({ id: const1Comp.id, members: { Value: { $type: 'int', value: 1 } } as any });
 
-      // === 接続設定 ===
-      // Equals: randomSource == 0, randomSource == 1 (Randomではなく保存されたRandomSourceを使用)
+      // === Connection settings ===
+      // Equals: randomSource == 0, randomSource == 1 (Use saved RandomSource, not Random)
       if (equals0Comp?.id && randomSourceComp?.id && const0Comp?.id) {
         await client.updateComponent({
           id: equals0Comp.id,
@@ -934,7 +934,7 @@ async function main() {
         });
       }
 
-      // === GlobalReference設定 ===
+      // === GlobalReference settings ===
       // PlayerWrite
       if (playerHandField?.id && playerGlobalRef?.id) {
         const fieldDetails = await client.getComponent(playerHandField.id);
@@ -989,7 +989,7 @@ async function main() {
         });
       }
 
-      // === Write設定 ===
+      // === Write settings ===
       // PlayerWrite
       if (playerWrite?.id && playerSource?.id && playerHandInputComp?.id) {
         await client.updateComponent({
@@ -1023,7 +1023,7 @@ async function main() {
         });
       }
 
-      // === フロー接続 ===
+      // === Flow connections ===
       // Receiver.OnTriggered → PlayerWrite
       if (receiverComp?.id && playerWrite?.id) {
         const receiverDetails = await client.getComponent(receiverComp.id);
@@ -1036,7 +1036,7 @@ async function main() {
         }
       }
 
-      // PlayerWrite.OnWritten → RandomWrite (ランダム値を保存)
+      // PlayerWrite.OnWritten -> RandomWrite (Save random value)
       if (playerWrite?.id && randomWriteComp?.id) {
         const playerWriteDetails = await client.getComponent(playerWrite.id);
         const onWrittenId = playerWriteDetails.data?.members?.OnWritten?.id;
@@ -1077,7 +1077,7 @@ async function main() {
 
     console.log('\n✅ Janken Game created successfully!');
     console.log(`   Main slot: ${slotName}`);
-    console.log('   - Press グー, チョキ, or パー button');
+    console.log('   - Press Rock, Scissors, or Paper button');
     console.log('   - CPU will randomly choose and result will be shown');
 
   } finally {

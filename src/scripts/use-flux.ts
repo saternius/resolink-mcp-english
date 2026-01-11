@@ -7,7 +7,7 @@ async function main() {
   await client.connect();
 
   try {
-    // ValueAddを探す
+    // Find ValueAdd
     const addSlot = await client.findSlotByName('ValueAdd`1', 'Root', 2);
     if (addSlot?.id) {
       console.log('=== ValueAdd<float> ===');
@@ -22,7 +22,7 @@ async function main() {
       }
     }
 
-    // ValueMulを探す
+    // Find ValueMul
     const mulSlot = await client.findSlotByName('ValueMul`1', 'Root', 2);
     if (mulSlot?.id) {
       console.log('\n=== ValueMul<float> ===');
@@ -37,14 +37,14 @@ async function main() {
       }
     }
 
-    // 入力値を変更してみる
-    console.log('\n=== 値を変更してみる ===');
+    // Try changing input values
+    console.log('\n=== Trying to change values ===');
 
-    // ValueAddの入力を探す
+    // Find ValueAdd inputs
     if (addSlot) {
       const root = await client.getSlot({ slotId: 'Root', depth: 3, includeComponentData: true });
 
-      // ValueInput<float>を探す
+      // Find ValueInput<float>
       function findInputs(slot: any, parentName: string): any[] {
         const results: any[] = [];
         const name = slot.name?.value || '';

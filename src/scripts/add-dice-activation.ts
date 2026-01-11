@@ -1,26 +1,26 @@
 /**
- * すべてのダイスにDynamicImpulseReceiver設定を追加
+ * Add DynamicImpulseReceiver settings to all dice
  *
- * 使い方: npx tsx src/scripts/add-dice-activation.ts [ws://localhost:3343]
+ * Usage: npx tsx src/scripts/add-dice-activation.ts [ws://localhost:3343]
  */
 import { ResoniteLinkClient } from '../client.js';
 
 const WS_URL = process.argv[2] || 'ws://localhost:3343';
 
-// ダイス情報（FluxスロットID）
+// Dice info (Flux slot IDs)
 const DICE_FLUX_SLOTS = [
   { name: 'D4', fluxId: 'Reso_3A6E1' },
   { name: 'D10x10', fluxId: 'Reso_3BC9E' },
   { name: 'D12', fluxId: 'Reso_3C0F7' },
   { name: 'D6 (33AFD)', fluxId: 'Reso_3C9A9' },
   { name: 'D6 (3D2EE)', fluxId: 'Reso_3D53A' },
-  // D6 (33AB7) - Reso_3AB3A は既に設定済み
+  // D6 (33AB7) - Reso_3AB3A is already configured
 ];
 
 async function addActivationToFlux(client: ResoniteLinkClient, diceName: string, fluxId: string) {
   console.log(`\n--- ${diceName} (${fluxId}) ---`);
 
-  // 1. Fluxスロットの子を取得してReferenceSource<User>とStartAsyncTaskを見つける
+  // 1. Get children of Flux slot and find ReferenceSource<User> and StartAsyncTask
   const fluxData = await client.getSlot({ slotId: fluxId, depth: 1 });
   if (!fluxData.success) {
     console.log(`  ERROR: Failed to get flux data`);
@@ -29,14 +29,14 @@ async function addActivationToFlux(client: ResoniteLinkClient, diceName: string,
 
   const fluxChildren = fluxData.data?.children || [];
 
-  // ReferenceSource<User>を持つUserFieldスロットを探す
+  // Find UserField slot that has ReferenceSource<User>
   const userFieldSlot = fluxChildren.find((c: any) => c.name?.value?.includes('UserField'));
   if (!userFieldSlot) {
     console.log(`  ERROR: UserField not found`);
     return;
   }
 
-  // StartAsyncTaskを探す (OnGrabbableReleasedの次のノード)
+  // Find StartAsyncTask (next node after OnGrabbableReleased)
   const startAsyncSlot = fluxChildren.find((c: any) =>
     c.name?.value === 'StartAsyncTask' || c.name?.value?.includes('StartAsyncTask')
   );
@@ -45,7 +45,7 @@ async function addActivationToFlux(client: ResoniteLinkClient, diceName: string,
     return;
   }
 
-  // UserFieldスロットのコンポーネントを取得
+  // Get components from UserField slot
   const userFieldData = await client.getSlot({ slotId: userFieldSlot.id!, includeComponentData: true });
   const refSourceComp = userFieldData.data?.components?.find((c: any) =>
     c.componentType?.includes('ReferenceSource') && c.componentType?.includes('User')
@@ -56,7 +56,7 @@ async function addActivationToFlux(client: ResoniteLinkClient, diceName: string,
   }
   console.log(`  ReferenceSource<User>: ${refSourceComp.id}`);
 
-  // StartAsyncTaskスロットのコンポーネントを取得
+  // Get components from StartAsyncTask slot
   const startAsyncData = await client.getSlot({ slotId: startAsyncSlot.id!, includeComponentData: true });
   const startAsyncComp = startAsyncData.data?.components?.find((c: any) =>
     c.componentType?.includes('StartAsyncTask')
@@ -67,7 +67,7 @@ async function addActivationToFlux(client: ResoniteLinkClient, diceName: string,
   }
   console.log(`  StartAsyncTask: ${startAsyncComp.id}`);
 
-  // 2. 新しいノード用スロットを作成
+  // 2. Create slots for new nodes
   const nodes = [
     { name: 'ActivateTag', pos: { x: 0.5, y: -0.3, z: 0 } },
     { name: 'DynamicReceiver', pos: { x: 0.6, y: -0.15, z: 0 } },
@@ -79,7 +79,7 @@ async function addActivationToFlux(client: ResoniteLinkClient, diceName: string,
     await client.addSlot({ parentId: fluxId, name: node.name, position: node.pos });
   }
 
-  // 作成したスロットを取得
+  // Get created slots
   const fluxData2 = await client.getSlot({ slotId: fluxId, depth: 1 });
   const getChild = (name: string) => fluxData2.data?.children?.find((c: any) => c.name?.value === name);
 
@@ -93,7 +93,7 @@ async function addActivationToFlux(client: ResoniteLinkClient, diceName: string,
     return;
   }
 
-  // 3. コンポーネントを追加
+  // 3. Add components
   await client.addComponent({
     containerSlotId: activateTagSlot.id!,
     componentType: '[FrooxEngine]FrooxEngine.ProtoFlux.GlobalValue<string>',
@@ -111,10 +111,10 @@ async function addActivationToFlux(client: ResoniteLinkClient, diceName: string,
     componentType: '[ProtoFluxBindings]FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.ObjectWrite<[FrooxEngine]FrooxEngine.ProtoFlux.FrooxEngineContext,[FrooxEngine]FrooxEngine.User>',
   });
 
-  // 少し待つ
+  // Wait a bit
   await new Promise(resolve => setTimeout(resolve, 100));
 
-  // コンポーネントIDを取得
+  // Get component IDs
   const [tagData, receiverData, localUserData, writeData] = await Promise.all([
     client.getSlot({ slotId: activateTagSlot.id!, includeComponentData: true }),
     client.getSlot({ slotId: dynamicReceiverSlot.id!, includeComponentData: true }),
@@ -132,7 +132,7 @@ async function addActivationToFlux(client: ResoniteLinkClient, diceName: string,
     return;
   }
 
-  // 4. 値と接続を設定
+  // 4. Set values and connections
   // GlobalValue<string>.Value = "ActivateDice"
   await client.updateComponent({
     id: tagComp.id!,

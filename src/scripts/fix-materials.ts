@@ -2,8 +2,8 @@ import { ResoniteLinkClient } from '../client.js';
 
 interface PartFix {
   name: string;
-  materialRefId: string;  // Materials[0]のID
-  materialId: string;      // PBS_MetallicのID
+  materialRefId: string;  // Materials[0] ID
+  materialId: string;      // PBS_Metallic ID
 }
 
 async function main() {
@@ -13,7 +13,7 @@ async function main() {
   await client.connect();
 
   try {
-    // まず各パーツのMeshRendererを確認してMaterials[0]のIDを取得
+    // First check MeshRenderer of each part and get Materials[0] ID
     const parts = [
       { name: 'Seat', meshRendererId: 'Reso_A8E4', slotId: 'Reso_A80F' },
       { name: 'Backrest', meshRendererId: 'Reso_A919', slotId: 'Reso_A8E5' },
@@ -26,7 +26,7 @@ async function main() {
     for (const part of parts) {
       console.log(`\nFixing ${part.name}...`);
 
-      // MeshRendererの詳細を取得
+      // Get MeshRenderer details
       const compData = await client.getComponent(part.meshRendererId);
       if (!compData.success) {
         console.error(`  Failed to get MeshRenderer: ${compData.errorInfo}`);
@@ -38,14 +38,14 @@ async function main() {
 
       if (!materials || !materials.elements || materials.elements.length === 0) {
         console.log(`  No Materials elements found, adding new one...`);
-        // リストに要素がない場合は追加
+        // Add if list has no elements
         continue;
       }
 
       const materialRef = materials.elements[0];
       console.log(`  Materials[0] ID: ${materialRef.id}, current target: ${materialRef.targetId}`);
 
-      // PBS_MetallicのIDを取得
+      // Get PBS_Metallic ID
       const slotData = await client.getSlot({
         slotId: part.slotId,
         depth: 0,
@@ -68,8 +68,8 @@ async function main() {
 
       console.log(`  PBS_Metallic ID: ${pbsMaterial.id}`);
 
-      // Materials[0]のtargetIdを更新
-      // 参照要素を直接更新する - updateComponentでIDを指定
+      // Update Materials[0] targetId
+      // Directly update reference element - specify ID in updateComponent
       const response = await client.updateComponent({
         id: part.meshRendererId,
         members: {
@@ -78,7 +78,7 @@ async function main() {
             elements: [
               {
                 $type: 'reference',
-                id: materialRef.id,  // 既存の要素IDを指定
+                id: materialRef.id,  // Specify existing element ID
                 targetId: pbsMaterial.id,
               },
             ],

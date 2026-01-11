@@ -8,10 +8,10 @@ async function main() {
   await client.connect();
 
   try {
-    console.log(`=== QRコード板を作成 ===`);
-    console.log(`内容: ${qrContent}\n`);
+    console.log(`=== Creating QR Code Board ===`);
+    console.log(`Content: ${qrContent}\n`);
 
-    // 空中にスロットを作成 (Y=15m)
+    // Create slot in the air (Y=15m)
     await client.addSlot({
       name: 'QRCodeBoard',
       position: { x: 0, y: 15, z: 0 },
@@ -22,16 +22,16 @@ async function main() {
     const board = await client.findSlotByName('QRCodeBoard', 'Root', 1);
     if (!board?.id) throw new Error('Failed to create QRCodeBoard slot');
     const boardId = board.id;
-    console.log('スロット作成完了');
+    console.log('Slot created');
 
-    // コンポーネントを追加
+    // Add components
     await client.addComponent({ containerSlotId: boardId, componentType: '[FrooxEngine]FrooxEngine.QuadMesh' });
     await client.addComponent({ containerSlotId: boardId, componentType: '[FrooxEngine]FrooxEngine.MeshRenderer' });
     await client.addComponent({ containerSlotId: boardId, componentType: '[FrooxEngine]FrooxEngine.UnlitMaterial' });
     await client.addComponent({ containerSlotId: boardId, componentType: '[FrooxEngine]FrooxEngine.StringQRCodeTexture' });
-    console.log('コンポーネント追加完了');
+    console.log('Components added');
 
-    // コンポーネント情報を取得
+    // Get component info
     const slotData = await client.getSlot({ slotId: boardId, depth: 0, includeComponentData: true });
     if (!slotData.success || !slotData.data.components) throw new Error('Failed to get components');
 
@@ -42,13 +42,13 @@ async function main() {
 
     if (!mesh || !renderer || !material || !qrTexture) throw new Error('Missing components');
 
-    // MeshRendererにMeshを設定
+    // Set Mesh on MeshRenderer
     await client.updateComponent({
       id: renderer.id!,
       members: { Mesh: { $type: 'reference', targetId: mesh.id } } as any
     });
 
-    // MeshRendererにMaterialを設定
+    // Set Material on MeshRenderer
     await client.updateComponent({
       id: renderer.id!,
       members: { Materials: { $type: 'list', elements: [{ $type: 'reference', targetId: material.id }] } } as any
@@ -64,9 +64,9 @@ async function main() {
         });
       }
     }
-    console.log('MeshRenderer設定完了');
+    console.log('MeshRenderer configured');
 
-    // StringQRCodeTextureにPayloadを設定
+    // Set Payload on StringQRCodeTexture
     await client.updateComponent({
       id: qrTexture.id!,
       members: {
@@ -75,21 +75,21 @@ async function main() {
         Color1: { $type: 'colorX', value: { r: 0, g: 0, b: 0, a: 1, profile: 'sRGB' } }
       } as any
     });
-    console.log('QRコードテクスチャ設定完了');
+    console.log('QR code texture configured');
 
-    // UnlitMaterialにQRテクスチャを設定
+    // Set QR texture on UnlitMaterial
     await client.updateComponent({
       id: material.id!,
       members: {
         Texture: { $type: 'reference', targetId: qrTexture.id }
       } as any
     });
-    console.log('マテリアル設定完了');
+    console.log('Material configured');
 
-    console.log('\n=== QRコード板を作成しました ===');
-    console.log('位置: (0, 15, 0) - 空中15mの高さ');
-    console.log('サイズ: 5m x 5m');
-    console.log(`内容: ${qrContent}`);
+    console.log('\n=== QR Code Board Created ===');
+    console.log('Position: (0, 15, 0) - 15m height in the air');
+    console.log('Size: 5m x 5m');
+    console.log(`Content: ${qrContent}`);
 
   } finally {
     client.disconnect();
