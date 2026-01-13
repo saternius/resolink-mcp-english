@@ -2,6 +2,437 @@
 
 MCP server & CLI tool for controlling Resonite VR worlds using the ResoniteLink WebSocket protocol.
 
+---
+
+## Getting Started
+
+This comprehensive guide will walk you through setting up ResoniteLink MCP from scratch, including configuring Resonite, installing the project, and connecting via Claude or other MCP clients.
+
+### What is ResoniteLink MCP?
+
+ResoniteLink MCP is a bridge that allows AI assistants (like Claude) and external applications to programmatically control Resonite VR worlds. It provides:
+
+- **MCP Server**: Exposes 19+ tools for Claude to create/modify slots, components, ProtoFlux nodes, and UIX interfaces
+- **CLI Tool**: Command-line interface for direct world manipulation
+- **TypeScript Library**: Programmatic API for building automation scripts
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        Architecture                               │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   ┌─────────────┐     ┌──────────────────┐     ┌──────────────┐  │
+│   │   Claude    │     │  ResoniteLink    │     │   Resonite   │  │
+│   │  Desktop /  │────▶│   MCP Server     │────▶│   VR World   │  │
+│   │ Claude Code │ MCP │  (this project)  │ WS  │              │  │
+│   └─────────────┘     └──────────────────┘     └──────────────┘  │
+│                                                                   │
+│   ┌─────────────┐     ┌──────────────────┐          │            │
+│   │   Scripts   │────▶│ ResoniteLink     │──────────┘            │
+│   │  (batch     │     │  Client Library  │ WebSocket             │
+│   │   builds)   │     └──────────────────┘                       │
+│   └─────────────┘                                                 │
+│                                                                   │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### Prerequisites
+
+Before starting, ensure you have:
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| **Node.js** | 18.x or higher | Required for running the MCP server and scripts |
+| **npm** | 9.x or higher | Comes with Node.js |
+| **Resonite** | Latest | The VR platform (Steam or standalone) |
+| **Git** | Any | For cloning this repository (optional) |
+
+**Optional (for component search features):**
+- Decompiled Resonite source code for the `search_components`, `get_component_info`, and `grep_source` MCP tools
+
+### Step 1: Enable ResoniteLink in Resonite
+
+ResoniteLink is a **built-in feature** of Resonite (not a mod). You need to enable it to allow external connections.
+
+#### Method A: Graphical Client (Desktop/VR)
+
+1. **Launch Resonite** and enter a world you are hosting
+2. **Open the Dash Menu** (press Escape on desktop, or open your wrist menu in VR)
+3. **Navigate to Session** settings
+4. **Click "Enable ResoniteLink"**
+5. **Note the port number** displayed (default is usually `29551`, but may vary)
+
+> **Important**: You must be the **host** of the world to enable ResoniteLink.
+
+#### Method B: Headless Server Configuration
+
+Add the following to your headless server configuration JSON:
+
+```json
+{
+  "enableResoniteLink": true,
+  "forceResoniteLinkPort": 29551
+}
+```
+
+Or use a random port:
+
+```json
+{
+  "enableResoniteLink": true,
+  "forceResoniteLinkPort": 0
+}
+```
+
+#### Method C: Headless Server Command
+
+If your headless server is already running, use the console command:
+
+```
+enableResoniteLink 29551
+```
+
+Or use `0` for a random port:
+
+```
+enableResoniteLink 0
+```
+
+#### Permission Requirements
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **Enable Permission** | Builder | Minimum permission level required to enable ResoniteLink |
+| **Read/Write Access** | Configurable | Can be controlled via `ResoniteLinkPermissions` component in your world |
+
+> **Note**: Existing worlds are automatically configured to only allow ResoniteLink if the host has Builder or Admin permissions.
+
+#### Official Resources
+
+- **ResoniteLink Documentation**: [yellow-dog-man.github.io/ResoniteLink](https://yellow-dog-man.github.io/ResoniteLink/)
+- **GitHub Repository**: [github.com/Yellow-Dog-Man/ResoniteLink](https://github.com/Yellow-Dog-Man/ResoniteLink)
+
+### Step 2: Install This Project
+
+#### Clone the Repository
+
+```bash
+git clone https://github.com/saternius/resolink-mcp-english.git
+cd resolink-mcp-english
+```
+
+Or download and extract the ZIP file from GitHub.
+
+#### Install Dependencies
+
+```bash
+npm install
+```
+
+#### Build the Project
+
+```bash
+npm run build
+```
+
+This compiles the TypeScript source to JavaScript in the `dist/` directory.
+
+#### Verify Installation
+
+```bash
+# Check that the build was successful
+ls dist/mcp-server.js
+ls dist/cli.js
+```
+
+### Step 3: Configure MCP Client
+
+Choose the appropriate configuration method based on your MCP client:
+
+#### Option A: Claude Code (Recommended for Development)
+
+The project includes a pre-configured `.mcp.json` file. Update it with your local paths:
+
+1. **Edit `.mcp.json`** in the project root:
+
+```json
+{
+  "mcpServers": {
+    "resonitelink": {
+      "command": "node",
+      "args": ["/full/path/to/resolink-mcp-english/dist/mcp-server.js"],
+      "env": {
+        "RESONITE_WS_URL": "ws://localhost:29551"
+      }
+    }
+  }
+}
+```
+
+**Platform-specific path examples:**
+
+```json
+// Windows
+"args": ["C:/Users/YourName/projects/resolink-mcp-english/dist/mcp-server.js"]
+
+// macOS
+"args": ["/Users/YourName/projects/resolink-mcp-english/dist/mcp-server.js"]
+
+// Linux
+"args": ["/home/YourName/projects/resolink-mcp-english/dist/mcp-server.js"]
+```
+
+2. **Restart Claude Code** to load the MCP server
+
+3. **Verify** by typing `/mcp` in Claude Code - you should see `resonitelink` listed
+
+#### Option B: Claude Desktop
+
+Add the following to your Claude Desktop configuration file:
+
+**Configuration file locations:**
+
+| OS | Path |
+|----|------|
+| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
+| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Linux | `~/.config/Claude/claude_desktop_config.json` |
+
+**Configuration content:**
+
+```json
+{
+  "mcpServers": {
+    "resonitelink": {
+      "command": "node",
+      "args": ["/full/path/to/resolink-mcp-english/dist/mcp-server.js"],
+      "env": {
+        "RESONITE_WS_URL": "ws://localhost:29551"
+      }
+    }
+  }
+}
+```
+
+> **Note**: If the file doesn't exist, create it. If it already has content, merge the `resonitelink` entry into the existing `mcpServers` object.
+
+After saving, **restart Claude Desktop** to load the new MCP server.
+
+#### Option C: Other MCP Clients
+
+For other MCP-compatible clients, configure them to run:
+
+```bash
+node /path/to/resolink-mcp-english/dist/mcp-server.js
+```
+
+With environment variable:
+```
+RESONITE_WS_URL=ws://localhost:29551
+```
+
+### Step 4: Verify the Connection
+
+#### Test via CLI (Recommended First Step)
+
+Before testing MCP, verify the connection using the CLI:
+
+```bash
+# Test connection and get root slot info
+node dist/cli.js root --depth 1 --url ws://localhost:29551
+```
+
+**Expected output** (if successful):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "Root",
+    "name": "Root",
+    "children": [
+      { "id": "Reso_XXX", "name": "Controllers" },
+      { "id": "Reso_XXX", "name": "SpawnArea" },
+      ...
+    ]
+  }
+}
+```
+
+**If you see an error**, check the [Troubleshooting](#troubleshooting) section below.
+
+#### Test via MCP (Claude)
+
+Once the CLI test succeeds, test via your MCP client:
+
+1. Open Claude Code or Claude Desktop
+2. Ask Claude: *"Connect to Resonite and get the root slot"*
+3. Claude should use the `connect` and `get_slot` tools
+
+**Example interaction:**
+
+```
+You: Connect to Resonite and show me what's in the world
+
+Claude: I'll connect to Resonite and get the root slot information.
+[Uses connect tool]
+[Uses get_slot tool with slotId: "Root", depth: 1]
+
+The world contains:
+- Controllers (system)
+- SpawnArea (system)
+- Light (system)
+- Skybox (system)
+...
+```
+
+### Step 5: Quick Start Examples
+
+#### Create a Simple Cube via CLI
+
+```bash
+# 1. Add a slot for the cube
+node dist/cli.js add-slot --name "MyCube" --position 0,1.5,2
+
+# 2. Find the slot ID
+node dist/cli.js find --name "MyCube"
+# Note the slot ID (e.g., Reso_ABC123)
+
+# 3. Add mesh and renderer components
+node dist/cli.js add-component --slot Reso_ABC123 --type "[FrooxEngine]FrooxEngine.BoxMesh"
+node dist/cli.js add-component --slot Reso_ABC123 --type "[FrooxEngine]FrooxEngine.MeshRenderer"
+node dist/cli.js add-component --slot Reso_ABC123 --type "[FrooxEngine]FrooxEngine.PBS_Metallic"
+```
+
+#### Create a Cube via Claude (MCP)
+
+Simply ask:
+
+> "Create a red cube at position (0, 1.5, 2) in Resonite"
+
+Claude will automatically:
+1. Connect to Resonite
+2. Create a slot
+3. Add BoxMesh, MeshRenderer, and PBS_Metallic components
+4. Configure the material color
+
+#### Run a Script
+
+```bash
+# Create a ProtoFlux calculator (1+1=2)
+npx tsx src/scripts/create-flux-add.ts ws://localhost:29551
+
+# Create a colorful house
+npx tsx src/scripts/create-house3.ts ws://localhost:29551
+
+# Create a weather widget with HTTP requests
+npx tsx src/scripts/create-weather-widget.ts ws://localhost:29551
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RESONITE_WS_URL` | `ws://localhost:29551` | WebSocket URL for MCP server |
+| `RESONITELINK_URL` | `ws://localhost:29551` | WebSocket URL for CLI |
+
+**Setting environment variables:**
+
+```bash
+# Linux/macOS
+export RESONITE_WS_URL=ws://localhost:29551
+
+# Windows (PowerShell)
+$env:RESONITE_WS_URL = "ws://localhost:29551"
+
+# Windows (Command Prompt)
+set RESONITE_WS_URL=ws://localhost:29551
+```
+
+### Troubleshooting
+
+#### Connection Refused / ECONNREFUSED
+
+```
+Error: connect ECONNREFUSED 127.0.0.1:29551
+```
+
+**Causes & Solutions:**
+
+| Cause | Solution |
+|-------|----------|
+| Resonite not running | Launch Resonite and enter a world |
+| ResoniteLink not enabled | Enable ResoniteLink in Session settings |
+| Wrong port | Check the actual port in Resonite and update your configuration |
+| Firewall blocking | Allow Node.js through your firewall |
+
+#### Timeout Errors
+
+```
+Error: Request timeout after 30000ms
+```
+
+**Causes & Solutions:**
+
+| Cause | Solution |
+|-------|----------|
+| Invalid component type format | Check the [Component Type Format](#component-type-format) section |
+| Network latency | Increase timeout in client options |
+| Resonite is busy/frozen | Restart Resonite |
+
+#### Permission Denied
+
+```
+Error: Permission denied
+```
+
+**Causes & Solutions:**
+
+| Cause | Solution |
+|-------|----------|
+| Not the host | You must host the world to use ResoniteLink |
+| Insufficient permissions | Need Builder level or higher |
+| ResoniteLinkPermissions configured | Check the world's permission component |
+
+#### MCP Server Not Appearing
+
+If `resonitelink` doesn't appear in your MCP client:
+
+1. **Verify the path** in your configuration is correct and absolute
+2. **Check the build** - ensure `dist/mcp-server.js` exists
+3. **Restart the client** - MCP servers load on startup
+4. **Check logs** - Look for error messages in the client's console/logs
+
+#### Component Search Not Working
+
+The `search_components`, `get_component_info`, and `grep_source` tools require decompiled Resonite source code.
+
+1. **Obtain decompiled sources** using a .NET decompiler (e.g., ILSpy, dnSpy) on Resonite's assemblies
+2. **Update the path** in `src/mcp-server.ts` line 11:
+
+```typescript
+const decompileSearch = new DecompileSearch('/path/to/your/decompiled/sources');
+```
+
+3. **Rebuild** with `npm run build`
+
+> **Note**: This is an optional feature. All other MCP tools work without decompiled sources.
+
+### Next Steps
+
+Once setup is complete, explore:
+
+- **[Using as MCP Server](#using-as-mcp-server)** - Full list of available tools
+- **[Using as CLI](#using-as-cli)** - Command-line reference
+- **[Using as Library](#using-as-library)** - Programmatic API
+- **[Sample Scripts](#sample-scripts)** - Ready-to-run examples
+- **[Component Type Format](#component-type-format)** - How to specify components
+- **[Adding ProtoFlux Components](#adding-protoflux-components)** - Visual programming nodes
+
+For advanced patterns (UIX, ProtoFlux games, HTTP requests), see `CLAUDE.md` in the project root.
+
+---
+
 ## Installation
 
 ```bash
