@@ -2,14 +2,14 @@
   "mcpServers": {
     "resonitelink": {
       "command": "node",
-      "args": ["C:/Users/neo/GitHub/resolink_mcp/dist/mcp-server.js"],
+      "args": ["C:/Users/sater/Desktop/resolink-mcp-english/dist/mcp-server.js"],
       "env": {
-        "RESONITE_WS_URL": "ws://localhost:3343"
+        "RESONITE_WS_URL": "ws://localhost:64769"
       }
     },
     "resonite-camera": {
       "command": "node",
-      "args": ["C:/Users/neo/GitHub/resolink_mcp/dist/camera-mcp-server.js"],
+      "args": ["C:/Users/sater/Desktop/resolink-mcp-english/dist/camera-mcp-server.js"],
       "env": {
         "CAMERA_WS_URL": "wss://wsecho.kokoa.dev/mcp/cam"
       }

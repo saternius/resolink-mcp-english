@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ResoLink Browser</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Monaco Editor from CDN -->
+  <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/editor/editor.main.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-brand">
+        <h1>ResoLink Browser</h1>
+      </div>
+      <div class="connection-panel">
+        <input type="text" id="ws-url" class="input" value="ws://localhost:29551" placeholder="WebSocket URL">
+        <button id="connect-btn" class="btn btn-primary">Connect</button>
+        <span id="connection-status" class="status-indicator disconnected">Disconnected</span>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+      <!-- Sidebar - Slot Tree -->
+      <aside class="sidebar" id="sidebar">
+        <div class="panel">
+          <div class="panel-header">
+            <span>Scene Tree</span>
+            <div class="panel-actions">
+              <button id="refresh-tree-btn" class="btn btn-small" title="Refresh">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                </svg>
+              </button>
+              <button id="add-slot-btn" class="btn btn-small" title="Add Slot">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="panel-content">
+            <div id="slot-tree" class="tree-view">
+              <div class="tree-placeholder">Connect to view scene tree</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Panel -->
+      <main class="main-panel">
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab active" data-tab="inspector">Inspector</button>
+          <button class="tab" data-tab="scripts">Scripts</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+          <!-- Inspector Tab -->
+          <div id="inspector-tab" class="tab-pane active">
+            <div class="inspector" id="inspector">
+              <div class="inspector-placeholder">
+                <p>Select a slot to inspect</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scripts Tab -->
+          <div id="scripts-tab" class="tab-pane">
+            <div class="scripts-panel">
+              <!-- Script List -->
+              <div class="script-list-panel">
+                <div class="panel-header">
+                  <span>Scripts</span>
+                  <button id="new-script-btn" class="btn btn-small btn-primary">New Script</button>
+                </div>
+                <div id="script-list" class="script-list">
+                  <div class="tree-placeholder">No scripts found</div>
+                </div>
+              </div>
+
+              <!-- Script Editor -->
+              <div class="script-editor-panel">
+                <div class="panel-header">
+                  <span id="script-name">No script selected</span>
+                  <div class="panel-actions">
+                    <button id="run-script-btn" class="btn btn-small btn-success" disabled>Run</button>
+                    <button id="stop-script-btn" class="btn btn-small btn-danger" disabled>Stop</button>
+                    <button id="save-script-btn" class="btn btn-small btn-primary" disabled>Save</button>
+                  </div>
+                </div>
+                <div id="monaco-editor" class="monaco-container"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Console -->
+        <div class="console-panel" id="console-panel">
+          <div class="panel-header">
+            <span>Console</span>
+            <div class="panel-actions">
+              <button id="clear-console-btn" class="btn btn-small">Clear</button>
+              <button id="toggle-console-btn" class="btn btn-small">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="18 15 12 9 6 15"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div id="console-output" class="console-output"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Add Slot Modal -->
+  <div id="add-slot-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add New Slot</h3>
+        <button class="modal-close" data-modal="add-slot-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="new-slot-name">Name</label>
+          <input type="text" id="new-slot-name" class="input" placeholder="NewSlot">
+        </div>
+        <div class="form-group">
+          <label>Position</label>
+          <div class="input-row">
+            <input type="number" id="new-slot-x" class="input" placeholder="X" value="0" step="0.1">
+            <input type="number" id="new-slot-y" class="input" placeholder="Y" value="0" step="0.1">
+            <input type="number" id="new-slot-z" class="input" placeholder="Z" value="0" step="0.1">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-modal="add-slot-modal">Cancel</button>
+        <button id="confirm-add-slot" class="btn btn-primary">Add Slot</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Script Modal -->
+  <div id="new-script-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Create New Script</h3>
+        <button class="modal-close" data-modal="new-script-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="script-name-input">Script Name</label>
+          <input type="text" id="script-name-input" class="input" placeholder="MyScript">
+        </div>
+        <div class="form-group">
+          <label for="script-template">Template</label>
+          <select id="script-template" class="input">
+            <option value="empty">Empty</option>
+            <option value="basic">Basic (onStart/onUpdate)</option>
+            <option value="spinning">Spinning Object</option>
+            <option value="color-cycle">Color Cycle</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-modal="new-script-modal">Cancel</button>
+        <button id="confirm-new-script" class="btn btn-primary">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context Menu -->
+  <div id="context-menu" class="context-menu">
+    <div class="context-menu-item" data-action="add-child">Add Child Slot</div>
+    <div class="context-menu-item" data-action="add-component">Add Component</div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" data-action="duplicate">Duplicate</div>
+    <div class="context-menu-item" data-action="rename">Rename</div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item danger" data-action="delete">Delete</div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+  <script src="js/resonite-client.js"></script>
+  <script src="js/console.js"></script>
+  <script src="js/slot-tree.js"></script>
+  <script src="js/component-editor.js"></script>
+  <script src="js/script-context.js"></script>
+  <script src="js/script-runner.js"></script>
+  <script src="js/script-manager.js"></script>
+  <script src="js/script-editor.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
